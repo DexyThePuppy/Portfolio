@@ -46,7 +46,7 @@ jobs:
         env:
           CI: false
           NODE_ENV: production
-          PUBLIC_URL: /
+          PUBLIC_URL: http://me.dexy.dog
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

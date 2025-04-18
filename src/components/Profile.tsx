@@ -103,27 +103,8 @@ const Profile: React.FC<ProfileProps> = ({
 
   return (
     <div className="min-h-screen bg-secondary text-white">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-gray-custom sticky top-0 z-20">
-        <div className="px-4 py-3 flex items-center">
-          <button className="text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Navigation */}
-      <div className="hidden lg:block bg-gray-custom sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between py-4">
-            <button className="text-gray-400 hover:text-white transition">Groups</button>
-            <button className="text-gray-400 hover:text-white transition">Events</button>
-            <button className="text-gray-400 hover:text-white transition">Chats</button>
-          </div>
-        </div>
-      </div>
+      {/* Mobile Header - Removed */}
+      {/* Desktop Navigation - Removed */}
 
       {/* User Banner */}
       <div className="relative h-32 lg:h-48 w-full overflow-hidden">
@@ -154,9 +135,6 @@ const Profile: React.FC<ProfileProps> = ({
                   <h1 className="text-xl font-bold">{profile.displayName}</h1>
                   {isVip && <StarIcon className="w-5 h-5 text-yellow-400" />}
                 </div>
-                <button className="bg-primary text-white px-4 py-1.5 rounded-full text-sm">
-                  Edit Profile
-                </button>
               </div>
               <div className="flex items-center text-sm text-gray-300 mt-2">
                 <MapPinIcon className="w-4 h-4 mr-1" />
@@ -183,9 +161,6 @@ const Profile: React.FC<ProfileProps> = ({
                   alt={profile.displayName}
                   className="w-full aspect-square object-cover rounded-xl border-4 border-secondary"
                 />
-                <button className="absolute top-4 right-4 bg-primary text-white px-6 py-2 rounded-full">
-                  Edit Profile
-                </button>
               </div>
               <div className="mt-6 flex items-center gap-2">
                 <h1 className="text-3xl font-bold">{profile.displayName}</h1>
@@ -331,32 +306,6 @@ const Profile: React.FC<ProfileProps> = ({
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-custom lg:hidden">
-          <div className="flex justify-around py-3 px-4">
-            <button className="text-gray-400 hover:text-white transition flex flex-col items-center">
-              <HomeIcon className="w-6 h-6" />
-              <span className="text-xs mt-1">Profiles</span>
-            </button>
-            <button className="text-gray-400 hover:text-white transition flex flex-col items-center">
-              <MagnifyingGlassIcon className="w-6 h-6" />
-              <span className="text-xs mt-1">Search</span>
-            </button>
-            <button className="text-gray-400 hover:text-white transition flex flex-col items-center">
-              <UserGroupIcon className="w-6 h-6" />
-              <span className="text-xs mt-1">Groups</span>
-            </button>
-            <button className="text-gray-400 hover:text-white transition flex flex-col items-center">
-              <CalendarIcon className="w-6 h-6" />
-              <span className="text-xs mt-1">Events</span>
-            </button>
-            <button className="text-gray-400 hover:text-white transition flex flex-col items-center">
-              <ChatBubbleLeftIcon className="w-6 h-6" />
-              <span className="text-xs mt-1">Chats</span>
-            </button>
           </div>
         </div>
       </div>
