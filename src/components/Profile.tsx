@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   MapPinIcon, 
   UserIcon, 
@@ -8,7 +8,8 @@ import {
   UserGroupIcon,
   CalendarIcon,
   ChatBubbleLeftIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 interface UploadedImage {
@@ -97,9 +98,92 @@ const Profile: React.FC<ProfileProps> = ({
   const isVip = profile.roles.includes('supporter_vip');
   const publicSocialAccounts = profile.socialAccounts.filter(account => account.accessPermission === 'public');
   const publicImages = profile.images.filter(img => img.accessPermission === 'public' && !img.isAd);
+  const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
+  const [startPosition, setStartPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showHighRes, setShowHighRes] = useState(false);
+  const imageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const thumbnailUrl = useRef<string>('');
+  const scrollPosition = useRef(0);
 
   // Format biography sections
   const bioSections = profile.bio.biography.split('\n\n').map(section => section.trim());
+
+  useEffect(() => {
+    if (selectedImage) {
+      // Store current scroll position and lock the page
+      scrollPosition.current = window.scrollY;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollPosition.current}px`;
+      document.body.style.width = '100%';
+    } else {
+      // Restore scroll position and unlock the page
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollPosition.current);
+    }
+  }, [selectedImage]);
+
+  const calculateExpandedDimensions = () => {
+    if (!startPosition) return null;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const imageRatio = startPosition.width / startPosition.height;
+    const viewportRatio = viewportWidth / viewportHeight;
+    
+    let finalWidth, finalHeight;
+    if (imageRatio > viewportRatio) {
+      finalWidth = viewportWidth * 0.9;
+      finalHeight = finalWidth / imageRatio;
+    } else {
+      finalHeight = viewportHeight * 0.9;
+      finalWidth = finalHeight * imageRatio;
+    }
+    
+    return {
+      width: finalWidth,
+      height: finalHeight,
+      x: (viewportWidth - finalWidth) / 2,
+      y: (viewportHeight - finalHeight) / 2
+    };
+  };
+
+  const handleImageClick = (image: ProfileImage, index: number) => {
+    const imageElement = imageRefs.current[`image-${index}`];
+    if (imageElement) {
+      const rect = imageElement.getBoundingClientRect();
+      
+      thumbnailUrl.current = getImageUrl(image.image.uuid);
+      
+      setStartPosition({
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height
+      });
+      setSelectedImage(image);
+      setShowHighRes(false);
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+        setTimeout(() => {
+          setShowHighRes(true);
+        }, 300);
+      });
+    }
+  };
+
+  const handleClosePreview = () => {
+    setIsAnimating(false);
+    setShowHighRes(false);
+    setTimeout(() => {
+      setSelectedImage(null);
+      setStartPosition(null);
+    }, 300);
+  };
 
   return (
     <div className="min-h-screen bg-secondary text-white">
@@ -149,6 +233,73 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Fullscreen Image Preview Modal */}
+        {selectedImage && startPosition && (
+          <div 
+            className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-colors duration-300`}
+            onClick={handleClosePreview}
+            style={{ 
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              willChange: 'background-color'
+            }}
+          >
+            <button 
+              className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
+              onClick={handleClosePreview}
+            >
+              <XMarkIcon className="w-8 h-8" />
+            </button>
+            <div
+              className="fixed transition-all duration-300 ease-[cubic-bezier(.17,.67,.24,.98)]"
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
+                height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
+                transform: isAnimating 
+                  ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0)`
+                  : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
+                transitionProperty: 'transform, width, height',
+                transformOrigin: '0 0',
+                willChange: 'transform, width, height',
+                backfaceVisibility: 'hidden',
+                perspective: 1000,
+                WebkitBackfaceVisibility: 'hidden',
+                WebkitPerspective: 1000
+              }}
+            >
+              {/* Thumbnail for animation - always visible */}
+              <img
+                src={thumbnailUrl.current}
+                alt="Preview"
+                className="w-full h-full object-cover rounded-xl"
+                style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden'
+                }}
+              />
+              {/* High-res image overlay */}
+              <img
+                src={getImageUrl(selectedImage.image.uuid, 1200)}
+                alt="Preview"
+                className={`absolute inset-0 w-full h-full object-cover rounded-xl transition-opacity duration-700 ${
+                  showHighRes ? 'opacity-100' : 'opacity-0'
+                }`}
+                loading="eager"
+                style={{
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden'
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Desktop Layout */}
         <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8">
@@ -236,11 +387,16 @@ const Profile: React.FC<ProfileProps> = ({
           <div className="col-span-9">
             <div className="grid grid-cols-4 gap-4">
               {publicImages.map((photo, index) => (
-                <div key={photo.id} className="aspect-square rounded-xl overflow-hidden">
+                <div 
+                  key={photo.id} 
+                  ref={el => imageRefs.current[`image-${index}`] = el}
+                  className="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
+                  onClick={() => handleImageClick(photo, index)}
+                >
                   <img
                     src={getImageUrl(photo.image.uuid)}
                     alt={`${profile.displayName}'s photo ${index + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition duration-300"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               ))}
@@ -252,7 +408,12 @@ const Profile: React.FC<ProfileProps> = ({
         <div className="lg:hidden">
           <div className="grid grid-cols-3 gap-2">
             {publicImages.slice(0, 6).map((photo, index) => (
-              <div key={photo.id} className="aspect-square rounded-lg overflow-hidden">
+              <div 
+                key={photo.id} 
+                ref={el => imageRefs.current[`image-${index}`] = el}
+                className="aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
+                onClick={() => handleImageClick(photo, index)}
+              >
                 <img
                   src={getImageUrl(photo.image.uuid)}
                   alt={`${profile.displayName}'s photo ${index + 1}`}
