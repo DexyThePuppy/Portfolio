@@ -2,7 +2,7 @@
   "name": "profile-page",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://DexyThePuppy.github.io/Portfolio",
+  "homepage": "http://me.dexy.dog",
   "dependencies": {
     "@heroicons/react": "^2.1.1",
     "autoprefixer": "^10.4.16",
