@@ -9,7 +9,29 @@ import {
   CalendarIcon,
   ChatBubbleLeftIcon,
   CheckBadgeIcon,
-  XMarkIcon
+  XMarkIcon,
+  GlobeAltIcon,
+  HeartIcon,
+  ShieldCheckIcon,
+  UserCircleIcon,
+  ChatBubbleOvalLeftIcon,
+  RocketLaunchIcon,
+  LanguageIcon,
+  LockClosedIcon,
+  ComputerDesktopIcon,
+  DeviceTabletIcon,
+  CubeIcon,
+  FilmIcon,
+  MusicalNoteIcon,
+  PhotoIcon,
+  HeartIcon as HeartIconSolid,
+  HandRaisedIcon,
+  FaceSmileIcon,
+  CloudIcon,
+  WrenchScrewdriverIcon,
+  PaperAirplaneIcon,
+  CakeIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 
 interface UploadedImage {
@@ -65,6 +87,18 @@ interface Sona {
   images: ProfileImage[];
 }
 
+interface SocialPreference {
+  id: string;
+  title: string;
+  icon: React.ElementType;
+}
+
+interface JoinedGroup {
+  id: string;
+  name: string;
+  icon: string;
+}
+
 interface ProfileProps {
   profile: {
     id: string;
@@ -85,6 +119,8 @@ interface ProfileProps {
     };
     socialAccounts: SocialAccount[];
     sonas: Sona[];
+    socialPreferences?: SocialPreference[];
+    joinedGroups?: JoinedGroup[];
   };
 }
 
@@ -106,8 +142,102 @@ const Profile: React.FC<ProfileProps> = ({
   const thumbnailUrl = useRef<string>('');
   const scrollPosition = useRef(0);
 
-  // Format biography sections
-  const bioSections = profile.bio.biography.split('\n\n').map(section => section.trim());
+  // Main Info - Updated to match bio exactly
+  const mainInfo = [
+    { id: '1', title: 'Main', icon: UserIcon },
+    { id: '2', title: '22 | Austria & Germany', icon: MapPinIcon },
+    { id: '3', title: 'He/Him', icon: UserIcon },
+    { id: '4', title: 'Australian Shep & Bernese Mountain Dog-dragon hybrid mix', icon: UserIcon },
+    { id: '5', title: 'Gay Derg Doggo', icon: HeartIcon },
+    { id: '6', title: 'Ambivert', icon: UserGroupIcon },
+    { id: '7', title: 'Dating', icon: HeartIconSolid }
+  ];
+
+  // Stats - Updated to match bio exactly
+  const statsInfo = [
+    { 
+      category: 'Physical',
+      items: [
+        { id: '1', title: 'Height 187cm/6.13feet', icon: UserIcon },
+        { id: '2', title: 'Weight 99kg/218,3lbs', icon: HeartIcon }
+      ]
+    },
+    {
+      category: 'Traits',
+      items: [
+        { id: '1', title: 'Absolutely Adorable', icon: FaceSmileIcon },
+        { id: '2', title: 'Cuddle Buddy', icon: HeartIconSolid }
+      ]
+    },
+    {
+      category: 'Personality',
+      items: [
+        { id: '1', title: 'Overwhelmed fast', icon: HandRaisedIcon },
+        { id: '2', title: 'Emotionally Sensitive', icon: HeartIcon },
+        { id: '3', title: 'Pretty shy', icon: FaceSmileIcon },
+        { id: '4', title: 'Smol Spoon', icon: HeartIconSolid },
+        { id: '5', title: 'Very jealous', icon: HeartIcon }
+      ]
+    }
+  ];
+
+  // Personality Traits
+  const personalityTraits = [
+    { id: '1', title: 'Absolutely Adorable', icon: FaceSmileIcon },
+    { id: '2', title: 'Cuddle Buddy', icon: HeartIconSolid },
+    { id: '3', title: 'Overwhelmed fast', icon: HandRaisedIcon },
+    { id: '4', title: 'Emotionally Sensitive', icon: HeartIcon },
+    { id: '5', title: 'Pretty shy', icon: FaceSmileIcon },
+    { id: '6', title: 'Smol Spoon', icon: HeartIconSolid },
+    { id: '7', title: 'Very jealous', icon: HeartIcon }
+  ];
+
+  // Professional Skills
+  const professionalSkills = [
+    { id: '1', title: 'Front-end Dev', icon: CloudIcon },
+    { id: '2', title: '3D Artist', icon: CubeIcon },
+    { id: '3', title: 'Future Content Creator', icon: FilmIcon },
+    { id: '4', title: 'Music Producer', icon: MusicalNoteIcon }
+  ];
+
+  // Hobbies
+  const hobbies = [
+    { id: '1', title: 'Jailbreaking Devices', icon: WrenchScrewdriverIcon },
+    { id: '2', title: 'Social Media', icon: PhotoIcon },
+    { id: '3', title: 'PC/VR Gaming', icon: ComputerDesktopIcon }
+  ];
+
+  // Languages with flags
+  const languages = [
+    { id: '1', name: 'Austrian', flag: '🇦🇹' },
+    { id: '2', name: 'German', flag: '🇩🇪' },
+    { id: '3', name: 'American', flag: '🇺🇸' },
+    { id: '4', name: 'Bosnian', flag: '🇧🇦' }
+  ];
+
+  // Tech Setup
+  const techSetup = {
+    gaming: [
+      { id: '1', title: 'PC: Ryzen 9 7950x3D & RTX 4090', icon: ComputerDesktopIcon },
+      { id: '2', title: 'VR: Quest 2, 4x Trackers & 2x Basestation', icon: DeviceTabletIcon }
+    ],
+    computers: [
+      { id: '1', title: 'Laptop: Macbook M1 Pro 14', icon: ComputerDesktopIcon }
+    ],
+    consoles: [
+      { id: '1', title: 'PSP', icon: DeviceTabletIcon },
+      { id: '2', title: 'PSVita', icon: DeviceTabletIcon },
+      { id: '3', title: 'PS1', icon: DeviceTabletIcon },
+      { id: '4', title: 'PS2', icon: DeviceTabletIcon },
+      { id: '5', title: 'PS3', icon: DeviceTabletIcon },
+      { id: '6', title: 'PS4', icon: DeviceTabletIcon },
+      { id: '7', title: 'Wii', icon: DeviceTabletIcon },
+      { id: '8', title: 'Wii U', icon: DeviceTabletIcon },
+      { id: '9', title: '2x Nintendo DS Lite', icon: DeviceTabletIcon },
+      { id: '10', title: 'Nintendo 3DS', icon: DeviceTabletIcon },
+      { id: '11', title: 'Nintendo Switch', icon: DeviceTabletIcon }
+    ]
+  };
 
   useEffect(() => {
     if (selectedImage) {
@@ -187,10 +317,7 @@ const Profile: React.FC<ProfileProps> = ({
 
   return (
     <div className="min-h-screen bg-secondary text-white">
-      {/* Mobile Header - Removed */}
-      {/* Desktop Navigation - Removed */}
-
-      {/* User Banner */}
+      {/* Banner Section */}
       <div className="relative h-32 lg:h-48 w-full overflow-hidden">
         <div className="absolute inset-0">
           <img
@@ -203,38 +330,440 @@ const Profile: React.FC<ProfileProps> = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-4 lg:py-8">
-        {/* Profile Header - Mobile */}
-        <div className="lg:hidden mb-6">
-          <div className="flex items-start gap-4">
-            <div className="relative -mt-10">
+        {/* Profile Header with Avatar - Full Width on Desktop */}
+        <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+          <div className="flex items-start gap-4 lg:block">
+            <div className="relative -mt-10 lg:-mt-20">
               <img
                 src={getImageUrl(profile.profileImage.image.uuid)}
                 alt={profile.displayName}
-                className="w-20 h-20 rounded-full object-cover border-2 border-secondary"
+                className="w-20 h-20 lg:w-32 lg:h-32 rounded-full lg:rounded-xl object-cover border-2 lg:border-4 border-secondary"
               />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold">{profile.displayName}</h1>
-                  {isVip && <StarIcon className="w-5 h-5 text-yellow-400" />}
+            <div className="flex-1 lg:mt-6">
+              <div className="flex items-center gap-2 mb-6">
+                <h1 className="text-xl lg:text-3xl font-bold">{profile.displayName}</h1>
+                {isVip && <StarIcon className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-400" />}
+              </div>
+
+              {/* Location and Info */}
+              <div className="space-y-3 text-[17px]">
+                {/* Info Row */}
+                <div className="flex flex-col sm:flex-row items-start gap-6 flex-wrap lg:flex-nowrap lg:justify-between">
+                  {/* Home Location */}
+                  <div className="flex items-center gap-2">
+                    <HomeIcon className="w-5 h-5 text-white shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">Austria</span>
+                      <span className="text-gray-400 text-sm">Salzburg Region</span>
+                    </div>
+                  </div>
+
+                  {/* Age */}
+                  <div className="flex items-center gap-2">
+                    <CakeIcon className="w-5 h-5 text-white shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">22 Years</span>
+                      <span className="text-gray-400 text-sm">15.05.2002</span>
+                    </div>
+                  </div>
+
+                  {/* Sexual Orientation */}
+                  <div className="flex items-center gap-2">
+                    <HeartIconSolid className="w-5 h-5 text-pink-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">Gay Doggo</span>
+                      <span className="text-gray-400 text-sm">Sexual Orientation</span>
+                    </div>
+                  </div>
+
+                  {/* Relationship Status */}
+                  <div className="flex items-center gap-2">
+                    <HeartIcon className="w-5 h-5 text-red-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">Dating</span>
+                      <span className="text-gray-400 text-sm">Relationship Status</span>
+                    </div>
+                  </div>
+
+                  {/* Gender */}
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="w-5 h-5 text-blue-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">Male</span>
+                      <span className="text-gray-400 text-sm">He/Him</span>
+                    </div>
+                  </div>
+
+                  {/* Species */}
+                  <div className="flex items-center gap-2">
+                    <PaperAirplaneIcon className="w-5 h-5 text-purple-500 shrink-0" />
+                    <div className="flex flex-col">
+                      <span className="text-white">Furry & Puppy</span>
+                      <span className="text-gray-400 text-sm">Species</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center text-sm text-gray-300 mt-2">
-                <MapPinIcon className="w-4 h-4 mr-1" />
-                <span>{profile.location.place.place}, {profile.location.place.country}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-300 mt-1">
-                <UserIcon className="w-4 h-4 mr-1" />
-                <span>{profile.age}</span>
-                <span className="mx-1">·</span>
-                <span>{profile.bio.relationshipStatus}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Fullscreen Image Preview Modal */}
+        <div className="grid lg:grid-cols-12 lg:gap-8">
+          {/* Left Column - Profile Info */}
+          <div className="lg:col-span-3">
+            {/* Features */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Features</h2>
+                </div>
+                {statsInfo.map((section) => (
+                  <div key={section.category} className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-400">{section.category}</h3>
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                      {section.items.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 text-gray-300">
+                          <item.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
+                          <span className="text-sm truncate" title={item.title}>{item.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Personality */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Personality</h2>
+                </div>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                  {personalityTraits.map((trait) => (
+                    <div key={trait.id} className="flex items-center gap-3 text-gray-300">
+                      <trait.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
+                      <span className="text-sm truncate" title={trait.title}>{trait.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Professional Skills & Hobbies */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-6">
+                {/* Professional Skills */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">Professional</h2>
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                    {professionalSkills.map((skill) => (
+                      <div key={skill.id} className="flex items-center gap-3 text-gray-300">
+                        <skill.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
+                        <span className="text-sm truncate" title={skill.title}>{skill.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Hobbies */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">Hobbies</h2>
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                    {hobbies.map((hobby) => (
+                      <div key={hobby.id} className="flex items-center gap-3 text-gray-300">
+                        <hobby.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
+                        <span className="text-sm truncate" title={hobby.title}>{hobby.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Languages */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Languages</h2>
+                </div>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                  {languages.map((lang) => (
+                    <div key={lang.id} className="flex items-center gap-2 text-gray-300">
+                      <span className="text-base">{lang.flag}</span>
+                      <span className="text-sm">{lang.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Tech Setup */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Tech Setup</h2>
+                </div>
+                {/* Gaming PC */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-400">Gaming PC</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400">
+                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <span>Ryzen 9 7950x3D</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-400">
+                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <span>RTX 4090</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* VR Setup */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-400">VR Setup</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
+                      <DeviceTabletIcon className="w-4 h-4" />
+                      <span>Quest 2</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-orange-500/20 text-orange-400">
+                      <DeviceTabletIcon className="w-4 h-4" />
+                      <span>4x Trackers</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-400">
+                      <DeviceTabletIcon className="w-4 h-4" />
+                      <span>2x Basestation</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Computers */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-400">Computers</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-400">
+                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <span>Macbook M1 Pro 14</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gaming Consoles */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-400">Gaming Consoles</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {techSetup.consoles.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className={`
+                          flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
+                          ${item.title.toLowerCase().includes('ps') ? 'bg-red-500/20 text-red-400' : 
+                            item.title.toLowerCase().includes('nintendo') ? 'bg-green-500/20 text-green-400' : 
+                            item.title.toLowerCase().includes('wii') ? 'bg-blue-500/20 text-blue-400' : 
+                            'bg-gray-500/20 text-gray-400'}
+                        `}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Links */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Social Links</h2>
+                </div>
+                <div className="space-y-3">
+                  {/* Twitter (Verified) */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/twitter-icon.png" alt="Twitter" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Twitter</span>
+                        <CheckBadgeIcon className="w-4 h-4 text-[#1DA1F2]" />
+                      </div>
+                      <span className="text-sm text-gray-400">@DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Last.fm (Verified) */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#D51007]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/lastfm-icon.png" alt="Last.fm" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Last.fm</span>
+                        <CheckBadgeIcon className="w-4 h-4 text-[#D51007]" />
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Bluesky (Verified) */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#0085FF]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/bluesky-icon.png" alt="Bluesky" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Bluesky</span>
+                        <CheckBadgeIcon className="w-4 h-4 text-[#0085FF]" />
+                      </div>
+                      <span className="text-sm text-gray-400">Dexy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Twitter (Alt) */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/twitter-icon.png" alt="Twitter" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Twitter</span>
+                      </div>
+                      <span className="text-sm text-gray-400">@DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Instagram */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#E4405F]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/instagram-icon.png" alt="Instagram" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Instagram</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Telegram */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#26A5E4]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/telegram-icon.png" alt="Telegram" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Telegram</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Discord */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#5865F2]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/discord-icon.png" alt="Discord" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Discord</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Steam */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#000000]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/steam-icon.png" alt="Steam" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Steam</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Platforms */}
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Platforms</h2>
+                </div>
+                <div className="space-y-3">
+                  {/* VRChat */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#7B68EE]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/vrchat-icon.png" alt="VRChat" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">VRChat</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+
+                  {/* Resonite */}
+                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
+                    <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
+                      <img src="https://assets.barq.app/images/resonite-icon.png" alt="Resonite" className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Resonite</span>
+                      </div>
+                      <span className="text-sm text-gray-400">DexyThePuppy</span>
+                    </div>
+                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Photo Grid */}
+          <div className="lg:col-span-9 mt-6 lg:mt-0">
+            <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-4">
+              {publicImages.map((photo, index) => (
+                <div 
+                  key={photo.id} 
+                  ref={el => imageRefs.current[`image-${index}`] = el}
+                  className="aspect-square rounded-lg lg:rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
+                  onClick={() => handleImageClick(photo, index)}
+                >
+                  <img
+                    src={getImageUrl(photo.image.uuid)}
+                    alt={`${profile.displayName}'s photo ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {/* Image Preview Modal */}
         {selectedImage && startPosition && (
           <div 
             className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-colors duration-300`}
@@ -300,176 +829,6 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
           </div>
         )}
-
-        {/* Desktop Layout */}
-        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8">
-          {/* Left Column - Profile Info & Social */}
-          <div className="col-span-3">
-            <div className="bg-gray-custom rounded-2xl p-6 mb-6">
-              <div className="relative -mt-20">
-                <img
-                  src={getImageUrl(profile.profileImage.image.uuid)}
-                  alt={profile.displayName}
-                  className="w-full aspect-square object-cover rounded-xl border-4 border-secondary"
-                />
-              </div>
-              <div className="mt-6 flex items-center gap-2">
-                <h1 className="text-3xl font-bold">{profile.displayName}</h1>
-                {isVip && <StarIcon className="w-6 h-6 text-yellow-400" />}
-              </div>
-              <div className="mt-4 space-y-4">
-                {bioSections.map((section, index) => (
-                  <p key={index} className="text-gray-400 whitespace-pre-line">{section}</p>
-                ))}
-              </div>
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center text-gray-300">
-                  <MapPinIcon className="w-5 h-5 mr-2" />
-                  <span>{profile.location.place.place}, {profile.location.place.country}</span>
-                </div>
-                <div className="flex items-center text-gray-300">
-                  <UserIcon className="w-5 h-5 mr-2" />
-                  <span>{profile.age}</span>
-                  <span className="mx-2">·</span>
-                  <span>{profile.bio.relationshipStatus}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Social Accounts - Desktop */}
-            <div className="bg-gray-custom rounded-2xl p-6 mb-6">
-              <h2 className="text-xl font-semibold mb-4">Social Accounts</h2>
-              <div className="space-y-3">
-                {publicSocialAccounts.map((account) => (
-                  <a
-                    key={account.id}
-                    href={account.url}
-                    className="flex items-center justify-between text-gray-400 hover:text-white transition group"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="group-hover:text-primary">{account.socialNetwork}</span>
-                      {account.isVerified && (
-                        <CheckBadgeIcon className="w-4 h-4 text-primary" />
-                      )}
-                    </div>
-                    <span>{account.displayName}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Character Sonas */}
-            <div className="bg-gray-custom rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4">Characters</h2>
-              <div className="space-y-4">
-                {profile.sonas.map((sona) => (
-                  <div key={sona.id} className="flex items-center gap-3">
-                    {sona.images[0] && (
-                      <img
-                        src={getImageUrl(sona.images[0].image.uuid)}
-                        alt={sona.displayName}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    )}
-                    <div>
-                      <p className="font-medium">{sona.displayName}</p>
-                      <p className="text-sm text-gray-400">{sona.species.displayName}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="col-span-9">
-            <div className="grid grid-cols-4 gap-4">
-              {publicImages.map((photo, index) => (
-                <div 
-                  key={photo.id} 
-                  ref={el => imageRefs.current[`image-${index}`] = el}
-                  className="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
-                  onClick={() => handleImageClick(photo, index)}
-                >
-                  <img
-                    src={getImageUrl(photo.image.uuid)}
-                    alt={`${profile.displayName}'s photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Photo Grid */}
-        <div className="lg:hidden">
-          <div className="grid grid-cols-3 gap-2">
-            {publicImages.slice(0, 6).map((photo, index) => (
-              <div 
-                key={photo.id} 
-                ref={el => imageRefs.current[`image-${index}`] = el}
-                className="aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
-                onClick={() => handleImageClick(photo, index)}
-              >
-                <img
-                  src={getImageUrl(photo.image.uuid)}
-                  alt={`${profile.displayName}'s photo ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Social Accounts - Mobile */}
-        <div className="mt-6 lg:hidden">
-          <h2 className="text-lg font-semibold mb-2">Social Accounts</h2>
-          <div className="bg-gray-custom rounded-xl p-4 space-y-2">
-            {publicSocialAccounts.map((account) => (
-              <a
-                key={account.id}
-                href={account.url}
-                className="flex items-center justify-between text-gray-400 hover:text-white transition group"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="group-hover:text-primary">{account.socialNetwork}</span>
-                  {account.isVerified && (
-                    <CheckBadgeIcon className="w-4 h-4 text-primary" />
-                  )}
-                </div>
-                <span>{account.displayName}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {/* Character Sonas - Mobile */}
-        <div className="mt-6 mb-20 lg:hidden">
-          <h2 className="text-lg font-semibold mb-2">Characters</h2>
-          <div className="bg-gray-custom rounded-xl p-4 space-y-3">
-            {profile.sonas.map((sona) => (
-              <div key={sona.id} className="flex items-center gap-3">
-                {sona.images[0] && (
-                  <img
-                    src={getImageUrl(sona.images[0].image.uuid)}
-                    alt={sona.displayName}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                )}
-                <div>
-                  <p className="font-medium">{sona.displayName}</p>
-                  <p className="text-sm text-gray-400">{sona.species.displayName}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
