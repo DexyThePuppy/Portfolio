@@ -578,7 +578,7 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
 
             {/* Social Links */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6">
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-4">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">Social Links</h2>
@@ -703,7 +703,7 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
 
             {/* Platforms */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">Platforms</h2>
