@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-accent: rgb(255, 138, 128);
+  --color-accent-dark: rgb(235, 118, 108);
+}
+
+/* Custom styles */
+body {
+  @apply bg-secondary text-white;
+  margin: 0;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
 .preview-expanded {
   transform: none !important;
 }
@@ -17,16 +39,253 @@
   transition-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
 }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Extra bold and large titles */
+h1 {
+  font-weight: 900;
+  font-size: 2.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-weight: 900;
+  font-size: 2rem;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+h3 {
+  font-weight: 900;
+  font-size: 1.75rem;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+h4, h5, h6 {
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.35;
+  letter-spacing: -0.025em;
+}
+
+.font-semibold {
+  font-weight: 700;
+}
+
+.font-medium {
+  font-weight: 600;
+}
+
+.font-normal {
+  font-weight: 500;
+}
+
+/* Additional title styles */
+.text-lg {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.text-xl {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.text-2xl {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+.text-3xl {
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+/* Custom accent colors */
+.text-primary {
+  color: var(--color-accent);
+}
+
+.bg-primary {
+  background-color: var(--color-accent);
+}
+
+.hover\:text-primary:hover {
+  color: var(--color-accent);
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--color-accent);
+}
+
+/* Section Cards */
+.section-card {
+  background-color: rgba(0, 0, 0, 0.192);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 138, 128, 0.1);
+  backdrop-filter: blur(4px);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.social-icon-container {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.social-link:hover {
+  background-color: rgba(255, 138, 128, 0.1);
+}
+
+.icon-small {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.icon-accent {
+  color: var(--color-accent);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.gap-small {
+  gap: 0.5rem;
+}
+
+.gap-medium {
+  gap: 0.75rem;
+}
+
+.border-accent {
+  border-color: var(--color-accent);
+}
+
+.section-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Image Carousel */
+.carousel-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 0.5rem;
+  transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+  padding: 0 0.25rem;
+}
+
+.carousel-item {
+  flex: 0 0 auto;
+  aspect-ratio: 1/1;
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.192);
+  border: 1px solid rgba(255, 138, 128, 0.1);
+  cursor: pointer;
+}
+
+.carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.carousel-item:hover img {
+  transform: scale(1.05);
+}
+
+.carousel-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  z-index: 10;
+}
+
+.carousel-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.carousel-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.carousel-button.prev {
+  left: 0.25rem;
+}
+
+.carousel-button.next {
+  right: 0.25rem;
+}
+
+@media (max-width: 1280px) {
+  .carousel-container {
+    margin: 0 -0.25rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .carousel-container {
+    margin: 0 -0.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .carousel-container {
+    margin: 0 -0.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .carousel-container {
+    margin: 0 -0.25rem;
+  }
 } 

@@ -158,13 +158,38 @@ const Profile: React.FC<ProfileProps> = ({
   const isVip = profile.roles.includes('supporter_vip');
   const publicSocialAccounts = profile.socialAccounts.filter(account => account.accessPermission === 'public');
   const publicImages = profile.images.filter(img => img.accessPermission === 'public' && !img.isAd);
+  
+  // Create an extended array of images for infinite scroll
+  const shuffleArray = (array: any[]) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Create an array that's 5 times longer than the original, with shuffled duplicates
+  const createExtendedImages = () => {
+    const multiplier = 5;
+    const extended = [];
+    for (let i = 0; i < multiplier; i++) {
+      extended.push(...shuffleArray(publicImages));
+    }
+    return extended;
+  };
+
+  const [extendedImages, setExtendedImages] = useState(createExtendedImages());
   const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
-  const [startPosition, setStartPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(Math.floor(publicImages.length * 2)); // Start in the middle
   const [isAnimating, setIsAnimating] = useState(false);
+  const [startPosition, setStartPosition] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [showHighRes, setShowHighRes] = useState(false);
   const imageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const thumbnailUrl = useRef<string>('');
   const scrollPosition = useRef(0);
+  const carouselContainerRef = useRef<HTMLDivElement>(null);
+  const [itemWidth, setItemWidth] = useState(0);
 
   // Main Info - Updated to match bio exactly
   const mainInfo = [
@@ -247,21 +272,89 @@ const Profile: React.FC<ProfileProps> = ({
     ],
     computers: [
       { id: '1', title: 'Laptop: Macbook M1 Pro 14', icon: ComputerDesktopIcon }
-    ],
-    consoles: [
-      { id: '1', title: 'PSP', icon: DeviceTabletIcon },
-      { id: '2', title: 'PSVita', icon: DeviceTabletIcon },
-      { id: '3', title: 'PS1', icon: DeviceTabletIcon },
-      { id: '4', title: 'PS2', icon: DeviceTabletIcon },
-      { id: '5', title: 'PS3', icon: DeviceTabletIcon },
-      { id: '6', title: 'PS4', icon: DeviceTabletIcon },
-      { id: '7', title: 'Wii', icon: DeviceTabletIcon },
-      { id: '8', title: 'Wii U', icon: DeviceTabletIcon },
-      { id: '9', title: '2x Nintendo DS Lite', icon: DeviceTabletIcon },
-      { id: '10', title: 'Nintendo 3DS', icon: DeviceTabletIcon },
-      { id: '11', title: 'Nintendo Switch', icon: DeviceTabletIcon }
     ]
   };
+
+  // Platforms
+  const platforms = [
+    { id: '1', title: 'Resonite', icon: faVrCardboard },
+    { id: '2', title: 'VRChat', icon: faVrCardboard },
+    { id: '3', title: 'Second Life', icon: faDesktop }
+  ];
+
+  // Calculate the number of visible items based on screen width
+  const getVisibleItems = (width: number) => {
+    if (width <= 640) return 3;
+    if (width <= 768) return 4;
+    if (width <= 1024) return 5;
+    if (width <= 1280) return 6;
+    return 7;
+  };
+
+  // Calculate item width based on container width
+  const calculateItemWidth = () => {
+    if (!carouselContainerRef.current) return;
+    const containerWidth = carouselContainerRef.current.clientWidth;
+    const visibleItems = getVisibleItems(window.innerWidth);
+    const gap = 8; // 0.5rem gap
+    const totalGaps = visibleItems - 1;
+    const availableWidth = containerWidth - (totalGaps * gap);
+    const calculatedItemWidth = Math.floor(availableWidth / visibleItems);
+    setItemWidth(calculatedItemWidth);
+  };
+
+  const visibleItems = getVisibleItems(window.innerWidth);
+
+  useEffect(() => {
+    calculateItemWidth();
+    const handleResize = () => {
+      calculateItemWidth();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleNext = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    
+    // If we're near the end, reset to the middle while maintaining visual position
+    if (currentIndex >= extendedImages.length - visibleItems - 5) {
+      const newImages = createExtendedImages();
+      setExtendedImages(newImages);
+      setCurrentIndex(Math.floor(publicImages.length * 2));
+    } else {
+      setCurrentIndex(prev => prev + 1);
+    }
+    
+    setTimeout(() => setIsAnimating(false), 500);
+  };
+
+  const handlePrev = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    
+    // If we're near the start, reset to the middle while maintaining visual position
+    if (currentIndex <= 5) {
+      const newImages = createExtendedImages();
+      setExtendedImages(newImages);
+      setCurrentIndex(Math.floor(publicImages.length * 2));
+    } else {
+      setCurrentIndex(prev => prev - 1);
+    }
+    
+    setTimeout(() => setIsAnimating(false), 500);
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!isAnimating) {
+        handleNext();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentIndex, isAnimating]);
 
   useEffect(() => {
     if (selectedImage) {
@@ -341,115 +434,137 @@ const Profile: React.FC<ProfileProps> = ({
 
   return (
     <div className="min-h-screen bg-secondary text-white">
-      {/* Banner Section */}
-      <div className="relative h-32 lg:h-48 w-full overflow-hidden">
-        <div className="absolute inset-0">
+      {/* Hero Section with Banner */}
+      <div className="relative">
+        <div className="h-64 lg:h-96 w-full overflow-hidden">
           <img
             src={getImageUrl(publicImages[0]?.image.uuid)}
             alt="Banner"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-secondary"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-[rgb(255,138,128)]/20 to-secondary"></div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-4 lg:py-8">
-        {/* Profile Header with Avatar - Full Width on Desktop */}
-        <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
-          <div className="flex items-start gap-4 lg:block">
-            <div className="relative -mt-10 lg:-mt-20">
-              <img
-                src={getImageUrl(profile.profileImage.image.uuid)}
-                alt={profile.displayName}
-                className="w-20 h-20 lg:w-32 lg:h-32 rounded-full lg:rounded-xl object-cover border-2 lg:border-4 border-secondary"
-              />
-            </div>
-            <div className="flex-1 lg:mt-6">
-              <div className="flex items-center gap-2 mb-6">
-                <h1 className="text-xl lg:text-3xl font-bold">{profile.displayName}</h1>
-                {isVip && <StarIcon className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-400" />}
+        
+        {/* Profile Header */}
+        <div className="absolute -bottom-16 lg:-bottom-24 w-full">
+          <div className="container mx-auto px-4">
+            <div className="flex items-end gap-6">
+              <div className="relative">
+                <img
+                  src={getImageUrl(profile.profileImage.image.uuid)}
+                  alt={profile.displayName}
+                  className="w-32 h-32 lg:w-48 lg:h-48 rounded-2xl lg:rounded-3xl object-cover border-4 border-[rgb(255,138,128)] shadow-xl"
+                />
+                {isVip && (
+                  <div className="absolute -top-2 -right-2 bg-[rgb(255,138,128)] text-white p-1 rounded-full">
+                    <StarIcon className="w-5 h-5" />
+                  </div>
+                )}
               </div>
-
-              {/* Location and Info */}
-              <div className="space-y-3 text-[17px]">
-                {/* Info Row */}
-                <div className="flex flex-col sm:flex-row items-start gap-6 flex-wrap lg:flex-nowrap lg:justify-between">
-                  {/* Home Location */}
+              <div className="flex-1 pb-4">
+                <h1 className="text-3xl lg:text-5xl font-bold mb-2 text-white">{profile.displayName}</h1>
+                <div className="flex items-center gap-4 text-gray-200">
                   <div className="flex items-center gap-2">
-                    <HomeIcon className="w-5 h-5 text-white shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">Austria</span>
-                      <span className="text-gray-400 text-sm">Salzburg Region</span>
-                    </div>
+                    <MapPinIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+                    <span>{profile.location.place.place}, {profile.location.place.country}</span>
                   </div>
-
-                  {/* Age */}
                   <div className="flex items-center gap-2">
-                    <CakeIcon className="w-5 h-5 text-white shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">22 Years</span>
-                      <span className="text-gray-400 text-sm">15.05.2002</span>
-                    </div>
-                  </div>
-
-                  {/* Sexual Orientation */}
-                  <div className="flex items-center gap-2">
-                    <HeartIconSolid className="w-5 h-5 text-pink-500 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">Gay Doggo</span>
-                      <span className="text-gray-400 text-sm">Sexual Orientation</span>
-                    </div>
-                  </div>
-
-                  {/* Relationship Status */}
-                  <div className="flex items-center gap-2">
-                    <HeartIcon className="w-5 h-5 text-red-500 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">Dating</span>
-                      <span className="text-gray-400 text-sm">Relationship Status</span>
-                    </div>
-                  </div>
-
-                  {/* Gender */}
-                  <div className="flex items-center gap-2">
-                    <UserIcon className="w-5 h-5 text-blue-500 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">Male</span>
-                      <span className="text-gray-400 text-sm">He/Him</span>
-                    </div>
-                  </div>
-
-                  {/* Species */}
-                  <div className="flex items-center gap-2">
-                    <PaperAirplaneIcon className="w-5 h-5 text-purple-500 shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-white">Furry & Puppy</span>
-                      <span className="text-gray-400 text-sm">Species</span>
-                    </div>
+                    <CakeIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+                    <span>{profile.age} years old</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid lg:grid-cols-12 lg:gap-8">
-          {/* Left Column - Profile Info */}
+      {/* Image Carousel */}
+      <div className="container mx-auto px-4 mt-24 lg:mt-32">
+        <div className="carousel-container" ref={carouselContainerRef}>
+          <button 
+            onClick={handlePrev}
+            className="carousel-button prev"
+            disabled={isAnimating}
+            aria-label="Previous image"
+            style={{ left: 0 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div 
+            className="carousel-track"
+            style={{ 
+              transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
+              width: 'max-content',
+              paddingLeft: '0.25rem',
+              paddingRight: '0.25rem'
+            }}
+          >
+            {extendedImages.map((image, index) => (
+              <div
+                key={`${image.id}-${index}`}
+                className="carousel-item"
+                onClick={() => !isAnimating && handleImageClick(image, index)}
+                style={{ 
+                  width: `${itemWidth}px`,
+                  flexBasis: `${itemWidth}px`
+                }}
+              >
+                <img
+                  src={getImageUrl(image.image.uuid)}
+                  alt={`${profile.displayName}'s photo ${index + 1}`}
+                  loading="lazy"
+                  draggable="false"
+                />
+              </div>
+            ))}
+          </div>
+          <button 
+            onClick={handleNext}
+            className="carousel-button next"
+            disabled={isAnimating}
+            aria-label="Next image"
+            style={{ right: 0 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 mt-8">
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Left Column */}
           <div className="lg:col-span-3">
-            {/* Features */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
+            {/* About Section */}
+            <div className="section-card">
+              <h2 className="section-title">About</h2>
+              <div className="space-y-3">
+                {mainInfo.map((info) => (
+                  <div key={info.id} className="flex-center gap-small">
+                    <info.icon className="icon-small icon-accent" />
+                    <span className="section-text">{info.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Stats Section */}
+            <div className="section-card">
+              <h2 className="section-title">Stats</h2>
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Features</h2>
-                </div>
                 {statsInfo.map((section) => (
-                  <div key={section.category} className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-400">{section.category}</h3>
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                  <div key={section.category}>
+                    <h3 className="text-sm font-semibold icon-accent mb-2">{section.category}</h3>
+                    <div className="space-y-2">
                       {section.items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 text-gray-300">
-                          <item.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
-                          <span className="text-sm truncate" title={item.title}>{item.title}</span>
+                        <div key={item.id} className="flex-center gap-small">
+                          <item.icon className="icon-small icon-accent" />
+                          <span className="section-text">{item.title}</span>
                         </div>
                       ))}
                     </div>
@@ -458,286 +573,102 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
             </div>
 
-            {/* Personality */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Personality</h2>
-                </div>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-                  {personalityTraits.map((trait) => (
-                    <div key={trait.id} className="flex items-center gap-3 text-gray-300">
-                      <trait.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
-                      <span className="text-sm truncate" title={trait.title}>{trait.title}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Professional Skills & Hobbies */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
-              <div className="space-y-6">
-                {/* Professional Skills */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Professional</h2>
-                  </div>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-                    {professionalSkills.map((skill) => (
-                      <div key={skill.id} className="flex items-center gap-3 text-gray-300">
-                        <skill.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
-                        <span className="text-sm truncate" title={skill.title}>{skill.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Hobbies */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold">Hobbies</h2>
-                  </div>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-                    {hobbies.map((hobby) => (
-                      <div key={hobby.id} className="flex items-center gap-3 text-gray-300">
-                        <hobby.icon className="w-5 h-5 min-w-[1.25rem] text-primary" />
-                        <span className="text-sm truncate" title={hobby.title}>{hobby.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Languages */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Languages</h2>
-                </div>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-                  {languages.map((lang) => (
-                    <div key={lang.id} className="flex items-center gap-2 text-gray-300">
-                      <span className="text-base">{lang.flag}</span>
-                      <span className="text-sm">{lang.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Tech Setup */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-6">
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Tech Setup</h2>
-                </div>
-                {/* Gaming PC */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-400">Gaming PC</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400">
-                      <FontAwesomeIcon icon={faMemory} className="w-4 h-4" />
-                      <span>Ryzen 9 7950x3D</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-400">
-                      <FontAwesomeIcon icon={faDisplay} className="w-4 h-4" />
-                      <span>RTX 4090</span>
+            <div className="section-card">
+              <h2 className="section-title">Tech Setup</h2>
+              <div className="space-y-4">
+                {Object.entries(techSetup).map(([category, items]) => (
+                  <div key={category}>
+                    <h3 className="text-sm font-semibold icon-accent mb-2">{category}</h3>
+                    <div className="space-y-2">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex-center gap-small">
+                          <item.icon className="icon-small icon-accent" />
+                          <span className="section-text">{item.title}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
+                ))}
+              </div>
+            </div>
 
-                {/* VR Setup */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-400">VR Setup</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
-                      <FontAwesomeIcon icon={faVrCardboard} className="w-4 h-4" />
-                      <span>Quest 2</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-orange-500/20 text-orange-400">
-                      <FontAwesomeIcon icon={faGhost} className="w-4 h-4" />
-                      <span>4x Trackers</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-400">
-                      <FontAwesomeIcon icon={faComputer} className="w-4 h-4" />
-                      <span>2x Basestation</span>
-                    </div>
+            {/* Platforms */}
+            <div className="section-card">
+              <h2 className="section-title">Platforms</h2>
+              <div className="space-y-2">
+                {platforms.map((platform) => (
+                  <div key={platform.id} className="flex-center gap-small">
+                    <FontAwesomeIcon icon={platform.icon} className="icon-small icon-accent" />
+                    <span className="section-text">{platform.title}</span>
                   </div>
-                </div>
-
-                {/* Computers */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-400">Computers</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-400">
-                      <FontAwesomeIcon icon={faApple} className="w-4 h-4" />
-                      <span>Macbook M1 Pro 14</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Gaming Consoles */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-gray-400">Gaming Consoles</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {techSetup.consoles.map((item) => {
-                      let icon;
-                      let colorClass;
-                      
-                      if (item.title.toLowerCase().includes('ps')) {
-                        icon = "https://img.icons8.com/color/512/play-station.png";
-                        colorClass = 'bg-red-500/20 text-red-400';
-                      } else if (item.title.toLowerCase().includes('nintendo')) {
-                        icon = "https://upload.wikimedia.org/wikipedia/commons/b/b3/Nintendo_red_logo.svg";
-                        colorClass = 'bg-green-500/20 text-green-400';
-                      } else if (item.title.toLowerCase().includes('wii')) {
-                        icon = "https://upload.wikimedia.org/wikipedia/commons/b/b3/Nintendo_red_logo.svg";
-                        colorClass = 'bg-blue-500/20 text-blue-400';
-                      } else {
-                        icon = faGamepad;
-                        colorClass = 'bg-gray-500/20 text-gray-400';
-                      }
-
-                      return (
-                      <div 
-                        key={item.id} 
-                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${colorClass}`}
-                        >
-                          {typeof icon === 'string' ? (
-                            <img src={icon} alt={item.title} className="w-4 h-4" />
-                          ) : (
-                            <FontAwesomeIcon icon={icon} className="w-4 h-4" />
-                          )}
-                        <span>{item.title}</span>
-                      </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
             {/* Social Links */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6 mb-4">
+            <div className="section-card">
+              <h2 className="section-title">Social Links</h2>
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Social Links</h2>
-                </div>
-                <div className="space-y-3">
-                  {/* Twitter (Verified) */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faTwitter} className="w-5 h-5 text-[#1DA1F2]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Twitter</span>
-                        <CheckBadgeIcon className="w-4 h-4 text-[#1DA1F2]" />
-                      </div>
-                      <span className="text-sm text-gray-400">@DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
+                {publicSocialAccounts.map((account) => {
+                  let icon;
+                  switch (account.socialNetwork.toLowerCase()) {
+                    case 'twitter':
+                      icon = faTwitter;
+                      break;
+                    case 'instagram':
+                      icon = faInstagram;
+                      break;
+                    case 'discord':
+                      icon = faDiscord;
+                      break;
+                    case 'steam':
+                      icon = faSteam;
+                      break;
+                    default:
+                      icon = GlobeAltIcon;
+                  }
 
-                  {/* Last.fm (Verified) */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#D51007]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faLastfm} className="w-5 h-5 text-[#D51007]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Last.fm</span>
-                        <CheckBadgeIcon className="w-4 h-4 text-[#D51007]" />
+                  return (
+                    <a
+                      key={account.id}
+                      href={account.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="social-link"
+                    >
+                      <div className="social-icon-container section-card">
+                        {typeof icon === 'function' ? (
+                          React.createElement(icon, { className: "icon-small" })
+                        ) : (
+                          <FontAwesomeIcon icon={icon} className="icon-small" />
+                        )}
                       </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Bluesky (Verified) */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#0085FF]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faBluesky} className="w-5 h-5 text-[#0085FF]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Bluesky</span>
-                        <CheckBadgeIcon className="w-4 h-4 text-[#0085FF]" />
+                      <div className="flex-1">
+                        <div className="flex-center gap-small">
+                          <span className="section-text">{account.displayName}</span>
+                          {account.isVerified && (
+                            <CheckBadgeIcon className="icon-small icon-accent" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400">{account.value}</span>
                       </div>
-                      <span className="text-sm text-gray-400">Dexy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Instagram */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#E4405F]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faInstagram} className="w-5 h-5 text-[#E4405F]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Instagram</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Telegram */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#26A5E4]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faTelegram} className="w-5 h-5 text-[#26A5E4]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Telegram</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Discord */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#5865F2]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faDiscord} className="w-5 h-5 text-[#5865F2]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Discord</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Steam */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#000000]/10 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faSteam} className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Steam</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-                </div>
+                      <ArrowTopRightOnSquareIcon className="icon-small icon-accent" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
 
           {/* Right Column - Photo Grid */}
-          <div className="lg:col-span-9 mt-6 lg:mt-0">
-            <div className="grid grid-cols-3 lg:grid-cols-4 gap-2 lg:gap-4">
+          <div className="lg:col-span-9">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {publicImages.map((photo, index) => (
-                <div 
-                  key={photo.id} 
+                <div
+                  key={photo.id}
                   ref={el => imageRefs.current[`image-${index}`] = el}
-                  className="aspect-square rounded-lg lg:rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300"
+                  className="aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30"
                   onClick={() => handleImageClick(photo, index)}
                 >
                   <img
@@ -747,77 +678,49 @@ const Profile: React.FC<ProfileProps> = ({
                   />
                 </div>
               ))}
-              </div>
             </div>
           </div>
         </div>
+      </div>
 
       {/* Image Preview Modal */}
-        {selectedImage && startPosition && (
-          <div 
-            className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-colors duration-300`}
+      {selectedImage && startPosition && (
+        <div
+          className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-colors duration-300`}
+          onClick={handleClosePreview}
+        >
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60]"
             onClick={handleClosePreview}
-            style={{ 
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              willChange: 'background-color'
+          >
+            <XMarkIcon className="w-8 h-8" />
+          </button>
+          <div
+            className="fixed transition-all duration-300 ease-[cubic-bezier(.17,.67,.24,.98)]"
+            style={{
+              width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
+              height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
+              transform: isAnimating
+                ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0)`
+                : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
             }}
           >
-            <button 
-              className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
-              onClick={handleClosePreview}
-            >
-              <XMarkIcon className="w-8 h-8" />
-            </button>
-            <div
-              className="fixed transition-all duration-300 ease-[cubic-bezier(.17,.67,.24,.98)]"
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
-                height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
-                transform: isAnimating 
-                  ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0)`
-                  : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
-                transitionProperty: 'transform, width, height',
-                transformOrigin: '0 0',
-                willChange: 'transform, width, height',
-                backfaceVisibility: 'hidden',
-                perspective: 1000,
-                WebkitBackfaceVisibility: 'hidden',
-                WebkitPerspective: 1000
-              }}
-            >
-              {/* Thumbnail for animation - always visible */}
-              <img
-                src={thumbnailUrl.current}
-                alt="Preview"
-                className="w-full h-full object-cover rounded-xl"
-                style={{
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden'
-                }}
-              />
-              {/* High-res image overlay */}
-              <img
-                src={getImageUrl(selectedImage.image.uuid, 1200)}
-                alt="Preview"
-                className={`absolute inset-0 w-full h-full object-cover rounded-xl transition-opacity duration-700 ${
-                  showHighRes ? 'opacity-100' : 'opacity-0'
-                }`}
-                loading="eager"
-                style={{
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden'
-                }}
-              />
-            </div>
+            <img
+              src={thumbnailUrl.current}
+              alt="Preview"
+              className="w-full h-full object-cover rounded-xl"
+            />
+            <img
+              src={getImageUrl(selectedImage.image.uuid, 1200)}
+              alt="Preview"
+              className={`absolute inset-0 w-full h-full object-cover rounded-xl transition-opacity duration-700 ${
+                showHighRes ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="eager"
+            />
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 };
