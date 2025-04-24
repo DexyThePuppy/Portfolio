@@ -1,4 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faTwitter, 
+  faLastfm,
+  faBluesky,
+  faInstagram,
+  faTelegram,
+  faDiscord,
+  faSteam,
+  faPlaystation,
+  faWindows,
+  faApple
+} from '@fortawesome/free-brands-svg-icons';
+import { 
+  faGamepad,
+  faDesktop,
+  faTablet,
+  faVrCardboard,
+  faMemory,
+  faComputer,
+  faLaptop,
+  faDisplay,
+  faGhost
+} from '@fortawesome/free-solid-svg-icons';
 import { 
   MapPinIcon, 
   UserIcon, 
@@ -513,11 +537,11 @@ const Profile: React.FC<ProfileProps> = ({
                   <h3 className="text-sm font-medium text-gray-400">Gaming PC</h3>
                   <div className="flex flex-wrap gap-2">
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-purple-500/20 text-purple-400">
-                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faMemory} className="w-4 h-4" />
                       <span>Ryzen 9 7950x3D</span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-400">
-                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faDisplay} className="w-4 h-4" />
                       <span>RTX 4090</span>
                     </div>
                   </div>
@@ -528,15 +552,15 @@ const Profile: React.FC<ProfileProps> = ({
                   <h3 className="text-sm font-medium text-gray-400">VR Setup</h3>
                   <div className="flex flex-wrap gap-2">
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400">
-                      <DeviceTabletIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faVrCardboard} className="w-4 h-4" />
                       <span>Quest 2</span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-orange-500/20 text-orange-400">
-                      <DeviceTabletIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faGhost} className="w-4 h-4" />
                       <span>4x Trackers</span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-400">
-                      <DeviceTabletIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faComputer} className="w-4 h-4" />
                       <span>2x Basestation</span>
                     </div>
                   </div>
@@ -547,7 +571,7 @@ const Profile: React.FC<ProfileProps> = ({
                   <h3 className="text-sm font-medium text-gray-400">Computers</h3>
                   <div className="flex flex-wrap gap-2">
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-gray-500/20 text-gray-400">
-                      <ComputerDesktopIcon className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faApple} className="w-4 h-4" />
                       <span>Macbook M1 Pro 14</span>
                     </div>
                   </div>
@@ -557,21 +581,38 @@ const Profile: React.FC<ProfileProps> = ({
                 <div className="space-y-3">
                   <h3 className="text-sm font-medium text-gray-400">Gaming Consoles</h3>
                   <div className="flex flex-wrap gap-2">
-                    {techSetup.consoles.map((item) => (
+                    {techSetup.consoles.map((item) => {
+                      let icon;
+                      let colorClass;
+                      
+                      if (item.title.toLowerCase().includes('ps')) {
+                        icon = "https://img.icons8.com/color/512/play-station.png";
+                        colorClass = 'bg-red-500/20 text-red-400';
+                      } else if (item.title.toLowerCase().includes('nintendo')) {
+                        icon = "https://upload.wikimedia.org/wikipedia/commons/b/b3/Nintendo_red_logo.svg";
+                        colorClass = 'bg-green-500/20 text-green-400';
+                      } else if (item.title.toLowerCase().includes('wii')) {
+                        icon = "https://upload.wikimedia.org/wikipedia/commons/b/b3/Nintendo_red_logo.svg";
+                        colorClass = 'bg-blue-500/20 text-blue-400';
+                      } else {
+                        icon = faGamepad;
+                        colorClass = 'bg-gray-500/20 text-gray-400';
+                      }
+
+                      return (
                       <div 
                         key={item.id} 
-                        className={`
-                          flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
-                          ${item.title.toLowerCase().includes('ps') ? 'bg-red-500/20 text-red-400' : 
-                            item.title.toLowerCase().includes('nintendo') ? 'bg-green-500/20 text-green-400' : 
-                            item.title.toLowerCase().includes('wii') ? 'bg-blue-500/20 text-blue-400' : 
-                            'bg-gray-500/20 text-gray-400'}
-                        `}
-                      >
-                        <item.icon className="w-4 h-4" />
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${colorClass}`}
+                        >
+                          {typeof icon === 'string' ? (
+                            <img src={icon} alt={item.title} className="w-4 h-4" />
+                          ) : (
+                            <FontAwesomeIcon icon={icon} className="w-4 h-4" />
+                          )}
                         <span>{item.title}</span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -587,7 +628,7 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Twitter (Verified) */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/twitter-icon.png" alt="Twitter" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faTwitter} className="w-5 h-5 text-[#1DA1F2]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -602,7 +643,7 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Last.fm (Verified) */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#D51007]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/lastfm-icon.png" alt="Last.fm" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faLastfm} className="w-5 h-5 text-[#D51007]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -617,7 +658,7 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Bluesky (Verified) */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#0085FF]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/bluesky-icon.png" alt="Bluesky" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faBluesky} className="w-5 h-5 text-[#0085FF]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -629,24 +670,10 @@ const Profile: React.FC<ProfileProps> = ({
                     <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
                   </a>
 
-                  {/* Twitter (Alt) */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#1DA1F2]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/twitter-icon.png" alt="Twitter" className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Twitter</span>
-                      </div>
-                      <span className="text-sm text-gray-400">@DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
                   {/* Instagram */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#E4405F]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/instagram-icon.png" alt="Instagram" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faInstagram} className="w-5 h-5 text-[#E4405F]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -660,7 +687,7 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Telegram */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#26A5E4]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/telegram-icon.png" alt="Telegram" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faTelegram} className="w-5 h-5 text-[#26A5E4]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -674,7 +701,7 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Discord */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#5865F2]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/discord-icon.png" alt="Discord" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faDiscord} className="w-5 h-5 text-[#5865F2]" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -688,49 +715,11 @@ const Profile: React.FC<ProfileProps> = ({
                   {/* Steam */}
                   <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
                     <div className="w-10 h-10 rounded-xl bg-[#000000]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/steam-icon.png" alt="Steam" className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faSteam} className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Steam</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Platforms */}
-            <div className="bg-gray-custom rounded-xl lg:rounded-2xl p-4 lg:p-6">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Platforms</h2>
-                </div>
-                <div className="space-y-3">
-                  {/* VRChat */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#7B68EE]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/vrchat-icon.png" alt="VRChat" className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">VRChat</span>
-                      </div>
-                      <span className="text-sm text-gray-400">DexyThePuppy</span>
-                    </div>
-                    <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-500" />
-                  </a>
-
-                  {/* Resonite */}
-                  <a href="#" className="flex items-center gap-3 text-gray-300 hover:text-white transition">
-                    <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
-                      <img src="https://assets.barq.app/images/resonite-icon.png" alt="Resonite" className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Resonite</span>
                       </div>
                       <span className="text-sm text-gray-400">DexyThePuppy</span>
                     </div>
