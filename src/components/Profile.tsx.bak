@@ -1061,7 +1061,7 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
               <div className="flex-1 pb-4 text-center sm:text-left">
                 <h1 className="text-3xl lg:text-5xl font-bold mb-2 mt-4 sm:mt-0 text-white">{profile.displayName}</h1>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-gray-200 max-w-5xl">
+                <div className="flex flex-wrap gap-4 text-gray-200 max-w-5xl">
                   <div className="flex items-center gap-2">
                     <MapPinIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>{profile.location.place.place}, {profile.location.place.country}</span>
@@ -1073,51 +1073,51 @@ const Profile: React.FC<ProfileProps> = ({
                   <div className="flex items-center gap-2">
                     <UserIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>He/Him</span>
-                </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <HeartIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>Gay</span>
-              </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <HeartIconSolid className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>Dating</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Image Carousel */}
+            {/* Image Carousel */}
             <div className="carousel-container relative z-20" ref={carouselContainerRef}>
-          <button 
-            onClick={handlePrev}
-                className="carousel-button prev z-30"
-            disabled={isAnimating}
-            aria-label="Previous image"
-                style={{ left: 0, position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div 
-            className="carousel-track"
-            style={{ 
-              transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
-              width: 'max-content',
-              paddingLeft: '0.25rem',
-              paddingRight: '0.25rem'
-            }}
-          >
-                {extendedImages.map((image, index) => {
-                  // Check if full-res is loaded for this image
-                  const isLoaded = fullResLoadedImages.current.has(image.image.uuid);
-                  
-                  return (
-              <div
-                key={`${image.id}-${index}`}
-                      className={`carousel-item relative z-20 cursor-pointer overflow-hidden ${isLoaded ? 'thumbnail-loaded' : ''}`}
+              <button 
+                onClick={handlePrev}
+                    className="carousel-button prev z-30"
+                disabled={isAnimating}
+                aria-label="Previous image"
+                    style={{ left: 0, position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div 
+                className="carousel-track"
+                style={{ 
+                  transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
+                  width: 'max-content',
+                  paddingLeft: '0.25rem',
+                  paddingRight: '0.25rem'
+                }}
+              >
+                    {extendedImages.map((image, index) => {
+                      // Check if full-res is loaded for this image
+                      const isLoaded = fullResLoadedImages.current.has(image.image.uuid);
+                      
+                      return (
+                <div
+                  key={`${image.id}-${index}`}
+                        className={`carousel-item relative z-20 cursor-pointer overflow-hidden ${isLoaded ? 'thumbnail-loaded' : ''}`}
                 onClick={() => !isAnimating && handleImageClick(image, index)}
-                      ref={el => imageRefs.current[`image-${index}`] = el}
+                        ref={el => imageRefs.current[`image-${index}`] = el}
                 style={{ 
                   width: `${itemWidth}px`,
                   flexBasis: `${itemWidth}px`
@@ -1131,318 +1131,319 @@ const Profile: React.FC<ProfileProps> = ({
                         className="w-full h-full object-cover pointer-events-auto transition-transform duration-300 hover:scale-110"
                 />
               </div>
-                  );
-                })}
-          </div>
-          <button 
-            onClick={handleNext}
-                className="carousel-button next z-30"
-            disabled={isAnimating}
-            aria-label="Next image"
-                style={{ right: 0, position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-      </div>
-
-      {/* Main Content */}
-            <div className="mt-8">
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-3">
-            {/* About Section */}
-            <div className="section-card">
-              <h2 className="section-title">About</h2>
-              <div className="space-y-3">
-                {mainInfo.map((info) => (
-                  <div key={info.id} className="flex-center gap-small">
-                    <info.icon className="icon-small icon-accent" />
-                    <span className="section-text">{info.title}</span>
-                  </div>
-                ))}
+                    );
+                  })}
               </div>
-            </div>
+              <button 
+                onClick={handleNext}
+                    className="carousel-button next z-30"
+                disabled={isAnimating}
+                aria-label="Next image"
+                    style={{ right: 0, position: 'absolute', top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+          </div>
 
-            {/* Stats Section */}
-            <div className="section-card">
-              <h2 className="section-title">Stats</h2>
-              <div className="space-y-4">
-                {statsInfo.map((section) => (
-                  <div key={section.category}>
-                    <h3 className="text-sm font-semibold icon-accent mb-2">{section.category}</h3>
-                    <div className="space-y-2">
-                      {section.items.map((item) => (
-                        <div key={item.id} className="flex-center gap-small">
-                          <item.icon className="icon-small icon-accent" />
-                          <span className="section-text">{item.title}</span>
+          {/* Main Content */}
+                <div className="mt-8">
+              <div className="grid lg:grid-cols-12 gap-8">
+                {/* Left Column */}
+                <div className="lg:col-span-3">
+                  {/* About Section */}
+                  <div className="section-card">
+                    <h2 className="section-title">About</h2>
+                    <div className="space-y-3">
+                      {mainInfo.map((info) => (
+                        <div key={info.id} className="flex-center gap-small">
+                          <info.icon className="icon-small icon-accent" />
+                          <span className="section-text">{info.title}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Tech Setup */}
-            <div className="section-card">
-              <h2 className="section-title">Tech Setup</h2>
-              <div className="space-y-4">
-                {Object.entries(techSetup).map(([category, items]) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-semibold icon-accent mb-2">{category}</h3>
-                    <div className="space-y-2">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex-center gap-small">
-                          <item.icon className="icon-small icon-accent" />
-                          <span className="section-text">{item.title}</span>
+                  {/* Stats Section */}
+                  <div className="section-card">
+                    <h2 className="section-title">Stats</h2>
+                    <div className="space-y-4">
+                      {statsInfo.map((section) => (
+                        <div key={section.category}>
+                          <h3 className="text-sm font-semibold icon-accent mb-2">{section.category}</h3>
+                          <div className="space-y-2">
+                            {section.items.map((item) => (
+                              <div key={item.id} className="flex-center gap-small">
+                                <item.icon className="icon-small icon-accent" />
+                                <span className="section-text">{item.title}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Platforms */}
-            <div className="section-card">
-              <h2 className="section-title">Platforms</h2>
-              <div className="space-y-2">
-                {platforms.map((platform) => (
-                  <div key={platform.id} className="flex-center gap-small">
-                    <FontAwesomeIcon icon={platform.icon} className="icon-small icon-accent" />
-                    <span className="section-text">{platform.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Social Links */}
-            <div className="section-card">
-              <h2 className="section-title">Social Links</h2>
-              <div className="space-y-3">
-                {publicSocialAccounts.map((account) => {
-                  let icon;
-                  switch (account.socialNetwork.toLowerCase()) {
-                    case 'twitter':
-                      icon = faTwitter;
-                      break;
-                    case 'instagram':
-                      icon = faInstagram;
-                      break;
-                    case 'discord':
-                      icon = faDiscord;
-                      break;
-                    case 'steam':
-                      icon = faSteam;
-                      break;
-                    default:
-                      icon = GlobeAltIcon;
-                  }
-
-                  return (
-                    <a
-                      key={account.id}
-                      href={account.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="social-link"
-                    >
-                      <div className="social-icon-container section-card">
-                        {typeof icon === 'function' ? (
-                          React.createElement(icon, { className: "icon-small" })
-                        ) : (
-                          <FontAwesomeIcon icon={icon} className="icon-small" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex-center gap-small">
-                          <span className="section-text">{account.displayName}</span>
-                          {account.isVerified && (
-                            <CheckBadgeIcon className="icon-small icon-accent" />
-                          )}
+                  {/* Tech Setup */}
+                  <div className="section-card">
+                    <h2 className="section-title">Tech Setup</h2>
+                    <div className="space-y-4">
+                      {Object.entries(techSetup).map(([category, items]) => (
+                        <div key={category}>
+                          <h3 className="text-sm font-semibold icon-accent mb-2">{category}</h3>
+                          <div className="space-y-2">
+                            {items.map((item) => (
+                              <div key={item.id} className="flex-center gap-small">
+                                <item.icon className="icon-small icon-accent" />
+                                <span className="section-text">{item.title}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <span className="text-xs text-gray-400">{account.value}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Platforms */}
+                  <div className="section-card">
+                    <h2 className="section-title">Platforms</h2>
+                    <div className="space-y-2">
+                      {platforms.map((platform) => (
+                        <div key={platform.id} className="flex-center gap-small">
+                          <FontAwesomeIcon icon={platform.icon} className="icon-small icon-accent" />
+                          <span className="section-text">{platform.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="section-card">
+                    <h2 className="section-title">Social Links</h2>
+                    <div className="space-y-3">
+                      {publicSocialAccounts.map((account) => {
+                        let icon;
+                        switch (account.socialNetwork.toLowerCase()) {
+                          case 'twitter':
+                            icon = faTwitter;
+                            break;
+                          case 'instagram':
+                            icon = faInstagram;
+                            break;
+                          case 'discord':
+                            icon = faDiscord;
+                            break;
+                          case 'steam':
+                            icon = faSteam;
+                            break;
+                          default:
+                            icon = GlobeAltIcon;
+                        }
+
+                        return (
+                          <a
+                            key={account.id}
+                            href={account.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="social-link"
+                          >
+                            <div className="social-icon-container section-card">
+                              {typeof icon === 'function' ? (
+                                React.createElement(icon, { className: "icon-small" })
+                              ) : (
+                                <FontAwesomeIcon icon={icon} className="icon-small" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex-center gap-small">
+                                <span className="section-text">{account.displayName}</span>
+                                {account.isVerified && (
+                                  <CheckBadgeIcon className="icon-small icon-accent" />
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-400">{account.value}</span>
+                            </div>
+                            <ArrowTopRightOnSquareIcon className="icon-small icon-accent" />
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Photo Grid */}
+                <div className="lg:col-span-9">
+                        <div key={galleryKey} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gallery-grid">
+                          {publicImages.map((photo, index) => {
+                            // Calculate optimal image size for this grid item
+                            const optimalSize = getGalleryImageSize(index);
+                            
+                            // Check if full-res is loaded for this image
+                            const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
+                            
+                            return (
+                      <div
+                                key={photo.id + (imageCacheBuster || '')}
+                        ref={el => imageRefs.current[`image-${index}`] = el}
+                                className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${isLoaded ? 'thumbnail-loaded' : ''}`}
+                        onClick={() => handleImageClick(photo, index)}
+                      >
+                        <img
+                                  src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
+                          alt={`${profile.displayName}'s photo ${index + 1}`}
+                                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                                  loading="lazy"
+                                  key={imageCacheBuster || undefined}
+                        />
                       </div>
-                      <ArrowTopRightOnSquareIcon className="icon-small icon-accent" />
-                    </a>
-                  );
-                })}
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Photo Grid */}
-          <div className="lg:col-span-9">
-                  <div key={galleryKey} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gallery-grid">
-                    {publicImages.map((photo, index) => {
-                      // Calculate optimal image size for this grid item
-                      const optimalSize = getGalleryImageSize(index);
-                      
-                      // Check if full-res is loaded for this image
-                      const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
-                      
-                      return (
-                <div
-                          key={photo.id + (imageCacheBuster || '')}
-                  ref={el => imageRefs.current[`image-${index}`] = el}
-                          className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${isLoaded ? 'thumbnail-loaded' : ''}`}
-                  onClick={() => handleImageClick(photo, index)}
+            {/* Image Preview Modal */}
+            {selectedImage && startPosition && (
+              <div
+                className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-all duration-300 ease-out`}
+                onClick={handleClosePreview}
+                style={{ 
+                  pointerEvents: isAnimating ? 'auto' : 'none',
+                  visibility: isAnimating ? 'visible' : 'hidden'
+                }}
+              >
+                <button
+                  className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
+                  onClick={(e) => handleClosePreview(e)}
+                  style={{ pointerEvents: 'auto' }}
                 >
-                  <img
-                            src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
-                    alt={`${profile.displayName}'s photo ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                            loading="lazy"
-                            key={imageCacheBuster || undefined}
-                  />
-                </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Image Preview Modal */}
-      {selectedImage && startPosition && (
-        <div
-          className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-all duration-300 ease-out`}
-          onClick={handleClosePreview}
-          style={{ 
-            pointerEvents: isAnimating ? 'auto' : 'none',
-            visibility: isAnimating ? 'visible' : 'hidden'
-          }}
-        >
-          <button
-            className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
-            onClick={(e) => handleClosePreview(e)}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <XMarkIcon className="w-8 h-8" />
-          </button>
-          
-          {/* Loading indicator */}
-          {isAnimating && !imageLoaded && showLoadingBar && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 opacity-80">
-              <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-          )}
-          
-          {/* Progress Bar */}
-          {isAnimating && showLoadingBar && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-48 md:w-64 z-50">
-              <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg">
-                <div className="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[rgb(255,138,128)] to-white rounded-full transition-all duration-200 ease-out"
-                    style={{ width: `${loadingProgress}%` }}
-                  ></div>
-                </div>
-                <div className="text-center text-white/80 text-xs mt-2 font-medium">
-                  {loadingProgress < 100 
-                    ? `Loading image... ${Math.round(loadingProgress)}%` 
-                    : 'Rendering image...'}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div
-            className={`fixed will-change-transform ${springAnimation ? 'transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'transition-all duration-600 ease-out'}`}
-            style={{
-              width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
-              height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
-              transform: isAnimating
-                ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0) ${springAnimation ? 'scale(1.02)' : 'scale(1)'}`
-                : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
-              transformOrigin: 'center',
-              boxShadow: isAnimating ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
-              overflow: 'hidden',
-              borderRadius: '0.75rem',
-              backgroundColor: 'rgba(0,0,0,0.2)',
-              zIndex: isAnimating ? 55 : 1,
-              transition: isAnimating ? undefined : 'all 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out, transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {/* Simplified container structure */}
-            <div className="absolute inset-0 rounded-xl overflow-hidden">
-              {/* Single content container */}
-              <div className="relative w-full h-full">
-                {/* Thumbnail background with blend mode */}
-                <div
-                  className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-                  style={{
-                    backgroundImage: `url(${thumbnailUrl.current})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    opacity: showHighRes && imageLoaded ? 0 : 0.9,
-                    filter: 'blur(0px)',
-                    transform: 'scale(1.01)', // Slightly larger to avoid corner gaps
-                  }}
-                />
+                  <XMarkIcon className="w-8 h-8" />
+                </button>
                 
-                {/* High-res image container - only render when needed */}
-                {(showHighRes || imageLoaded) && (
-                  <div
-                    className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-                    style={{
-                      opacity: showHighRes && imageLoaded ? 1 : 0,
-                      backgroundColor: 'rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {/* Actual high-res image - only render when needed */}
-                    {showHighRes && (
-                      <img
-                        src={getModifiedImageUrl(selectedImage.image.uuid, 1500)}
-                        alt="Full resolution preview"
-                        className="w-full h-full object-contain"
-                        onLoad={handleHighResImageLoad}
-              loading="eager"
-            />
-                    )}
+                {/* Loading indicator */}
+                {isAnimating && !imageLoaded && showLoadingBar && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 opacity-80">
+                    <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                   </div>
                 )}
+                
+                {/* Progress Bar */}
+                {isAnimating && showLoadingBar && (
+                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-48 md:w-64 z-50">
+                    <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg">
+                      <div className="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[rgb(255,138,128)] to-white rounded-full transition-all duration-200 ease-out"
+                          style={{ width: `${loadingProgress}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-center text-white/80 text-xs mt-2 font-medium">
+                        {loadingProgress < 100 
+                          ? `Loading image... ${Math.round(loadingProgress)}%` 
+                          : 'Rendering image...'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div
+                  className={`fixed will-change-transform ${springAnimation ? 'transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'transition-all duration-600 ease-out'}`}
+                  style={{
+                    width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
+                    height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
+                    transform: isAnimating
+                      ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0) ${springAnimation ? 'scale(1.02)' : 'scale(1)'}`
+                      : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
+                    transformOrigin: 'center',
+                    boxShadow: isAnimating ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
+                    overflow: 'hidden',
+                    borderRadius: '0.75rem',
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    zIndex: isAnimating ? 55 : 1,
+                    transition: isAnimating ? undefined : 'all 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out, transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {/* Simplified container structure */}
+                  <div className="absolute inset-0 rounded-xl overflow-hidden">
+                    {/* Single content container */}
+                    <div className="relative w-full h-full">
+                      {/* Thumbnail background with blend mode */}
+                      <div
+                        className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
+                        style={{
+                          backgroundImage: `url(${thumbnailUrl.current})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                          opacity: showHighRes && imageLoaded ? 0 : 0.9,
+                          filter: 'blur(0px)',
+                          transform: 'scale(1.01)', // Slightly larger to avoid corner gaps
+                        }}
+                      />
+                      
+                      {/* High-res image container - only render when needed */}
+                      {(showHighRes || imageLoaded) && (
+                        <div
+                          className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
+                          style={{
+                            opacity: showHighRes && imageLoaded ? 1 : 0,
+                            backgroundColor: 'rgba(0,0,0,0.15)',
+                          }}
+                        >
+                          {/* Actual high-res image - only render when needed */}
+                          {showHighRes && (
+                            <img
+                              src={getModifiedImageUrl(selectedImage.image.uuid, 1500)}
+                              alt="Full resolution preview"
+                              className="w-full h-full object-contain"
+                              onLoad={handleHighResImageLoad}
+                    loading="eager"
+                  />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Debug buttons */}
+            <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+              <button
+                onClick={clearCache}
+                className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white text-xs py-2 px-3 rounded-lg backdrop-blur-sm border border-white/10 transition-all duration-200 flex items-center gap-1"
+                title="Clear cache (debug)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+                Clear Cache
+              </button>
+              
+              <button
+                onClick={clearCookies}
+                className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white text-xs py-2 px-3 rounded-lg backdrop-blur-sm border border-white/10 transition-all duration-200 flex items-center gap-1"
+                title="Clear cookies & storage (debug)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zm-4.5 7a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h9a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-9z" />
+                </svg>
+                Clear Cookies
+              </button>
             </div>
           </div>
         </div>
-      )}
+      );
+    };
 
-      {/* Debug buttons */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-        <button
-          onClick={clearCache}
-          className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white text-xs py-2 px-3 rounded-lg backdrop-blur-sm border border-white/10 transition-all duration-200 flex items-center gap-1"
-          title="Clear cache (debug)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-          </svg>
-          Clear Cache
-        </button>
-        
-        <button
-          onClick={clearCookies}
-          className="bg-black/30 hover:bg-black/50 text-white/70 hover:text-white text-xs py-2 px-3 rounded-lg backdrop-blur-sm border border-white/10 transition-all duration-200 flex items-center gap-1"
-          title="Clear cookies & storage (debug)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zm-4.5 7a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h9a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-9z" />
-          </svg>
-          Clear Cookies
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Profile; 
+    export default Profile; 
