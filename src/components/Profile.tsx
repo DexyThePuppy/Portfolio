@@ -200,8 +200,7 @@ const Profile: React.FC<ProfileProps> = ({
     { id: '3', title: 'He/Him', icon: UserIcon },
     { id: '4', title: 'Australian Shep & Bernese Mountain Dog-dragon hybrid mix', icon: UserIcon },
     { id: '5', title: 'Gay Derg Doggo', icon: HeartIcon },
-    { id: '6', title: 'Ambivert', icon: UserGroupIcon },
-    { id: '7', title: 'Dating', icon: HeartIconSolid }
+    { id: '6', title: 'Ambivert', icon: UserGroupIcon }
   ];
 
   // Stats - Updated to match bio exactly
@@ -1036,10 +1035,6 @@ const Profile: React.FC<ProfileProps> = ({
                     <HeartIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>Gay</span>
               </div>
-                  <div className="flex items-center gap-2">
-                    <HeartIconSolid className="w-5 h-5 text-[rgb(255,138,128)]" />
-                    <span>Dating</span>
-            </div>
           </div>
         </div>
       </div>
