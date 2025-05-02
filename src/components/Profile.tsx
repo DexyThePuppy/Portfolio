@@ -2,46 +2,23 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faTwitter, 
-  faLastfm,
-  faBluesky,
   faInstagram,
-  faTelegram,
   faDiscord,
-  faSteam,
-  faPlaystation,
-  faWindows,
-  faApple
+  faSteam
 } from '@fortawesome/free-brands-svg-icons';
 import { 
-  faGamepad,
   faDesktop,
-  faTablet,
-  faVrCardboard,
-  faMemory,
-  faComputer,
-  faLaptop,
-  faDisplay,
-  faGhost
+  faVrCardboard
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   MapPinIcon, 
   UserIcon, 
   StarIcon,
-  HomeIcon,
-  MagnifyingGlassIcon,
   UserGroupIcon,
-  CalendarIcon,
-  ChatBubbleLeftIcon,
   CheckBadgeIcon,
   XMarkIcon,
   GlobeAltIcon,
   HeartIcon,
-  ShieldCheckIcon,
-  UserCircleIcon,
-  ChatBubbleOvalLeftIcon,
-  RocketLaunchIcon,
-  LanguageIcon,
-  LockClosedIcon,
   ComputerDesktopIcon,
   DeviceTabletIcon,
   CubeIcon,
@@ -53,7 +30,6 @@ import {
   FaceSmileIcon,
   CloudIcon,
   WrenchScrewdriverIcon,
-  PaperAirplaneIcon,
   CakeIcon,
   ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
@@ -156,10 +132,6 @@ declare global {
   }
 }
 
-const getImageUrl = (uuid: string, width: number = 374) => {
-  return `https://assets.barq.app/image/${uuid}.jpeg?width=${width}`;
-};
-
 const Profile: React.FC<ProfileProps> = ({
   profile
 }) => {
@@ -189,7 +161,7 @@ const Profile: React.FC<ProfileProps> = ({
 
   const [extendedImages, setExtendedImages] = useState(createExtendedImages());
   const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(Math.floor(publicImages.length * 2)); // Start in the middle
+  const [currentIndex, setCurrentIndex] = useState(Math.floor(publicImages.length * 2));
   const [isAnimating, setIsAnimating] = useState(false);
   const [startPosition, setStartPosition] = useState<{ 
     x: number; 
@@ -213,7 +185,6 @@ const Profile: React.FC<ProfileProps> = ({
   const [springAnimation, setSpringAnimation] = useState(false);
   const [imageCacheBuster, setImageCacheBuster] = useState<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
-  // Track gallery refresh state
   const [galleryKey, setGalleryKey] = useState(0);
 
   // Keep track of already loaded images and their dimensions
@@ -261,30 +232,15 @@ const Profile: React.FC<ProfileProps> = ({
     }
   ];
 
-  // Personality Traits
-  const personalityTraits = [
-    { id: '1', title: 'Absolutely Adorable', icon: FaceSmileIcon },
-    { id: '2', title: 'Cuddle Buddy', icon: HeartIconSolid },
-    { id: '3', title: 'Overwhelmed fast', icon: HandRaisedIcon },
-    { id: '4', title: 'Emotionally Sensitive', icon: HeartIcon },
-    { id: '5', title: 'Pretty shy', icon: FaceSmileIcon },
-    { id: '6', title: 'Smol Spoon', icon: HeartIconSolid },
-    { id: '7', title: 'Very jealous', icon: HeartIcon }
-  ];
-
-  // Professional Skills
-  const professionalSkills = [
-    { id: '1', title: 'Front-end Dev', icon: CloudIcon },
-    { id: '2', title: '3D Artist', icon: CubeIcon },
-    { id: '3', title: 'Future Content Creator', icon: FilmIcon },
-    { id: '4', title: 'Music Producer', icon: MusicalNoteIcon }
-  ];
-
-  // Hobbies
+  // Hobbies and Skills combined
   const hobbies = [
-    { id: '1', title: 'Jailbreaking Devices', icon: WrenchScrewdriverIcon },
-    { id: '2', title: 'Social Media', icon: PhotoIcon },
-    { id: '3', title: 'PC/VR Gaming', icon: ComputerDesktopIcon }
+    { id: '1', title: 'Front-end Development', icon: CloudIcon },
+    { id: '2', title: '3D Art', icon: CubeIcon },
+    { id: '3', title: 'Content Creation', icon: FilmIcon },
+    { id: '4', title: 'Music Production', icon: MusicalNoteIcon },
+    { id: '5', title: 'Jailbreaking Devices', icon: WrenchScrewdriverIcon },
+    { id: '6', title: 'Social Media', icon: PhotoIcon },
+    { id: '7', title: 'PC/VR Gaming', icon: ComputerDesktopIcon }
   ];
 
   // Languages with flags
@@ -296,15 +252,17 @@ const Profile: React.FC<ProfileProps> = ({
   ];
 
   // Tech Setup
-  const techSetup = {
-    gaming: [
-      { id: '1', title: 'PC: Ryzen 9 7950x3D & RTX 4090', icon: ComputerDesktopIcon },
-      { id: '2', title: 'VR: Quest 2, 4x Trackers & 2x Basestation', icon: DeviceTabletIcon }
-    ],
-    computers: [
-      { id: '1', title: 'Laptop: Macbook M1 Pro 14', icon: ComputerDesktopIcon }
-    ]
-  };
+  const techSetup = [
+    { id: '1', title: 'Motherboard: MSI MAG X670R TOMAHAWK WIFI', icon: ComputerDesktopIcon },
+    { id: '2', title: 'CPU: AMD Ryzen 9 7950X3D', icon: ComputerDesktopIcon },
+    { id: '3', title: 'RAM: 2x Vengeance RGB DDR5 32GB', icon: ComputerDesktopIcon },
+    { id: '4', title: 'GPU: NVIDIA GeForce RTX 4090', icon: ComputerDesktopIcon },
+    { id: '5', title: 'AIO: Corsair iCUE Link H150i RGB', icon: ComputerDesktopIcon },
+    { id: '6', title: 'Keyboard: Corsair K65 RGB MINI', icon: ComputerDesktopIcon },
+    { id: '7', title: 'Mouse: Corsair Ironclaw RGB Wireless Slipstream', icon: ComputerDesktopIcon },
+    { id: '8', title: 'VR: Quest 2, 4x Trackers & 2x Basestation', icon: DeviceTabletIcon },
+    { id: '9', title: 'Laptop: Macbook M1 Pro 14', icon: ComputerDesktopIcon }
+  ];
 
   // Platforms
   const platforms = [
@@ -978,7 +936,7 @@ const Profile: React.FC<ProfileProps> = ({
   }, []);
 
   // Function to get optimal image size for gallery items
-  const getGalleryImageSize = (index: number): number => {
+  const getGalleryImageSize = (_index: number): number => {
     // Use container size with device pixel ratio
     const dpr = window.devicePixelRatio || 1;
     const columns = getVisibleItems(window.innerWidth);
@@ -1185,21 +1143,40 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
             </div>
 
+            {/* Hobbies Section */}
+            <div className="section-card">
+              <h2 className="section-title">Hobbies & Skills</h2>
+              <div className="space-y-2">
+                {hobbies.map((hobby) => (
+                  <div key={hobby.id} className="flex-center gap-small">
+                    <hobby.icon className="icon-small icon-accent" />
+                    <span className="section-text">{hobby.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Languages Section */}
+            <div className="section-card">
+              <h2 className="section-title">Languages</h2>
+              <div className="space-y-2">
+                {languages.map((language) => (
+                  <div key={language.id} className="flex-center gap-small">
+                    <span className="text-xl">{language.flag}</span>
+                    <span className="section-text">{language.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Tech Setup */}
             <div className="section-card">
               <h2 className="section-title">Tech Setup</h2>
-              <div className="space-y-4">
-                {Object.entries(techSetup).map(([category, items]) => (
-                  <div key={category}>
-                    <h3 className="text-sm font-semibold icon-accent mb-2">{category}</h3>
-                    <div className="space-y-2">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex-center gap-small">
-                          <item.icon className="icon-small icon-accent" />
-                          <span className="section-text">{item.title}</span>
-                        </div>
-                      ))}
-                    </div>
+              <div className="space-y-2">
+                {techSetup.map((item) => (
+                  <div key={item.id} className="flex-center gap-small">
+                    <item.icon className="icon-small icon-accent" />
+                    <span className="section-text">{item.title}</span>
                   </div>
                 ))}
               </div>
