@@ -1250,34 +1250,31 @@ const Profile: React.FC<ProfileProps> = ({
 
           {/* Right Column - Photo Grid */}
           <div className="lg:col-span-9">
-                  <div key={galleryKey} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gallery-grid">
-                    {publicImages.map((photo, index) => {
-                      // Calculate optimal image size for this grid item
-                      const optimalSize = getGalleryImageSize(index);
-                      
-                      // Check if full-res is loaded for this image
-                      const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
-                      
-                      return (
-                <div
-                          key={photo.id + (imageCacheBuster || '')}
-                  ref={el => imageRefs.current[`image-${index}`] = el}
-                          className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${isLoaded ? 'thumbnail-loaded' : ''}`}
-                  onClick={() => handleImageClick(photo, index)}
-                >
-                  <img
-                            src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
-                    alt={`${profile.displayName}'s photo ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                            loading="lazy"
-                            key={imageCacheBuster || undefined}
-                  />
-                </div>
-                      );
-                    })}
+            <div key={galleryKey} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gallery-grid">
+              {publicImages.map((photo, index) => {
+                // Calculate optimal image size for this grid item
+                const optimalSize = getGalleryImageSize(index);
+                
+                // Check if full-res is loaded for this image
+                const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
+                
+                return (
+                  <div
+                    key={photo.id + (imageCacheBuster || '')}
+                    ref={el => imageRefs.current[`image-${index}`] = el}
+                    className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${isLoaded ? 'thumbnail-loaded' : ''}`}
+                    onClick={() => handleImageClick(photo, index)}
+                  >
+                    <img
+                      src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
+                      alt={`${profile.displayName}'s photo ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                      loading="lazy"
+                      key={imageCacheBuster || undefined}
+                    />
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1381,8 +1378,8 @@ const Profile: React.FC<ProfileProps> = ({
                         alt="Full resolution preview"
                         className="w-full h-full object-contain"
                         onLoad={handleHighResImageLoad}
-              loading="eager"
-            />
+                        loading="eager"
+                      />
                     )}
                   </div>
                 )}
