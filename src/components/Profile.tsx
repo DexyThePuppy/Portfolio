@@ -1030,10 +1030,12 @@ const Profile: React.FC<ProfileProps> = ({
                   <div className="flex items-center gap-2">
                     <UserIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>He/Him</span>
-                </div>
+                  </div>
                   <div className="flex items-center gap-2">
                     <HeartIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
                     <span>Gay</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
