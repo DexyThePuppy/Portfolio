@@ -200,16 +200,6 @@ const Profile: React.FC<ProfileProps> = ({
   // Track high-res loaded status
   const fullResLoadedImages = useRef<Set<string>>(new Set());
 
-  // Main Info - Updated to match bio exactly
-  const mainInfo = [
-    { id: '1', title: 'Main', icon: UserIcon },
-    { id: '2', title: '22 | Austria & Germany', icon: MapPinIcon },
-    { id: '3', title: 'He/Him', icon: UserIcon },
-    { id: '4', title: 'Australian Shep & Bernese Mountain Dog-dragon hybrid mix', icon: UserIcon },
-    { id: '5', title: 'Gay Derg Doggo', icon: HeartIcon },
-    { id: '6', title: 'Ambivert', icon: UserGroupIcon }
-  ];
-
   // Stats - Updated to match bio exactly
   const statsInfo = [
     { 
