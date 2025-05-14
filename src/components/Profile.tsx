@@ -8,7 +8,14 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { 
   faDesktop,
-  faVrCardboard
+  faVrCardboard,
+  faPaw as SolidPaw,
+  faUserGroup,
+  faDog,
+  faMarsDouble,
+  faLocationDot,
+  faCakeCandles,
+  faVenusMars
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   MapPinIcon, 
@@ -969,27 +976,39 @@ const Profile: React.FC<ProfileProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="flex-1 pb-0 text-left sm:text-left">
+                <div className="flex-1 pb-2 text-left sm:text-left">
                   <h1 className="text-3xl lg:text-5xl font-bold mb-4 mt-2 sm:mt-2 text-white">{profile.displayName}</h1>
                 </div>
               </div>
               
-              <div className="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 text-gray-200 w-full">
-                <div className="flex items-center justify-center gap-2">
-                  <MapPinIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+              <div className="flex flex-wrap gap-3 text-gray-200 w-full mb-2">
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faLocationDot} className="w-4 h-4 text-[rgb(255,138,128)]" />
                   <span>{profile.location.place.place}, {profile.location.place.country}</span>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <CakeIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faCakeCandles} className="w-4 h-4 text-[rgb(255,138,128)]" />
                   <span>{profile.age} years old</span>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <UserIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faVenusMars} className="w-4 h-4 text-[rgb(255,138,128)]" />
                   <span>He/Him</span>
                 </div>
-                <div className="flex items-center justify-center gap-2">
-                  <HeartIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faMarsDouble} className="w-4 h-4 text-[rgb(255,138,128)]" />
                   <span>Gay</span>
+                </div>
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faDog} className="w-4 h-4 text-[rgb(255,138,128)]" />
+                  <span>Doggo</span>
+                </div>
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={faUserGroup} className="w-4 h-4 text-[rgb(255,138,128)]" />
+                  <span>Ambivert</span>
+                </div>
+                <div className="flex items-center justify-start gap-2 bg-gray-800/50 rounded-full px-3 py-1.5">
+                  <FontAwesomeIcon icon={SolidPaw} className="w-4 h-4 text-[rgb(255,138,128)]" />
+                  <span>Furry & Puppy</span>
                 </div>
               </div>
             </div>
