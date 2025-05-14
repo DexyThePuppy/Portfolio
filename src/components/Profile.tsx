@@ -960,7 +960,7 @@ const Profile: React.FC<ProfileProps> = ({
                 <img
                   src={getModifiedImageUrl(profile.profileImage.image.uuid)}
                   alt={profile.displayName}
-                  className="w-44 h-44 sm:w-50 sm:h-50 lg:w-50 lg:h-50 rounded-3xl lg:rounded-3xl object-cover border-4 border-[rgb(255,138,128)] shadow-xl"
+                  className="w-32 h-32 sm:w-50 sm:h-50 lg:w-50 lg:h-50 rounded-3xl lg:rounded-3xl object-cover border-4 border-[rgb(255,138,128)] shadow-xl"
                 />
                 {isVip && (
                   <div className="absolute -top-2 -right-2 bg-[rgb(255,138,128)] text-white p-1 rounded-full">
