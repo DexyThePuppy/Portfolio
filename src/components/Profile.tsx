@@ -955,7 +955,7 @@ const Profile: React.FC<ProfileProps> = ({
         <div className="bg-secondary min-h-[70vh] rounded-t-3xl shadow-lg pt-10">
           <div className="container mx-auto px-4">
             {/* Profile Header */}
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 mb-8">
+            <div className="flex flex-row items-center gap-6 mb-8">
               <div className="relative -mt-28 sm:-mt-32 lg:-mt-36">
                 <img
                   src={getModifiedImageUrl(profile.profileImage.image.uuid)}
