@@ -1075,13 +1075,6 @@ const Profile: React.FC<ProfileProps> = ({
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-3">
-            {/* About Section */}
-            <InfoCard title="About">
-              {mainInfo.map((info) => (
-                <IconText key={info.id} icon={info.icon} text={info.title} />
-              ))}
-            </InfoCard>
-
             {/* Stats Section */}
             <InfoCard title="Stats">
               {statsInfo.map((section) => (
