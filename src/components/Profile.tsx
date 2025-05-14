@@ -15,8 +15,6 @@ import {
   UserIcon, 
   StarIcon,
   UserGroupIcon,
-  CheckBadgeIcon,
-  XMarkIcon,
   GlobeAltIcon,
   HeartIcon,
   ComputerDesktopIcon,
@@ -31,8 +29,11 @@ import {
   CloudIcon,
   WrenchScrewdriverIcon,
   CakeIcon,
-  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
+import InfoCard from './InfoCard';
+import IconText from './IconText';
+import ImageItem from './ImageItem';
+import ImagePreviewModal from './ImagePreviewModal';
 
 interface UploadedImage {
   uuid: string;
@@ -344,50 +345,92 @@ const Profile: React.FC<ProfileProps> = ({
     return () => clearInterval(interval);
   }, [currentIndex, isAnimating]);
 
-  // Handle parallax effect with smoothing for ease in/out
+  // Add state to track if banner is visible
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
+  const bannerRef = useRef<HTMLDivElement>(null);
+  
+  // Improved parallax effect with IntersectionObserver and optimized animation
   useEffect(() => {
-    let ticking = false;
-    let lastScrollY = 0;
-    let currentY = 0;
+    // Skip everything if modal is open
+    if (isModalOpen.current) return;
     
-    const handleScroll = () => {
-      // Only track scroll when modal is not open
-      if (isModalOpen.current) return;
-      
-      lastScrollY = window.scrollY;
-      
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          // Smooth interpolation toward target value
-          currentY = currentY + (lastScrollY - currentY) * 0.075;
-          setScrollY(currentY);
-          ticking = false;
-        });
-        
-        ticking = true;
+    let rafId: number | null = null;
+    let lastScrollY = window.scrollY;
+    let currentY = lastScrollY;
+    let targetY = lastScrollY;
+    
+    // More responsive parallax with variable smoothing
+    const smoothFactor = 0.12; // Increased from 0.075 for smoother motion
+    
+    // Create intersection observer to detect when banner is in view
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Update visibility state based on intersection
+        setIsBannerVisible(entries[0].isIntersecting);
+      },
+      { 
+        rootMargin: "100px 0px", // Add some margin to start/stop animation before element fully enters/exits
+        threshold: 0.01 // Trigger with minimal visibility
       }
+    );
+    
+    // Start observing banner
+    if (bannerRef.current) {
+      observer.observe(bannerRef.current);
+    }
+    
+    // Handle scroll events with throttling
+    const handleScroll = () => {
+      // Only update target position - animation loop will handle the rest
+      targetY = window.scrollY;
     };
     
-    // Set up an animation loop for smoother transitions
+    // Set up optimized animation loop for smoother transitions
     const animate = () => {
-      // Skip animation when modal is open
-      if (isModalOpen.current) return;
+      // If banner is not visible or modal is open, skip animation
+      if (!isBannerVisible || isModalOpen.current) {
+        // Still update currentY so that when it comes back into view, 
+        // it doesn't jump from the old position
+        currentY = targetY;
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
       
-      if (Math.abs(lastScrollY - currentY) > 0.1) {
-        currentY = currentY + (lastScrollY - currentY) * 0.075;
+      // Calculate distance to target
+      const distance = targetY - currentY;
+      const absDistance = Math.abs(distance);
+      
+      // Adaptive smoothing - faster for larger distances, smoother for small adjustments
+      // This creates more responsive movement for quick scrolls while maintaining smoothness
+      const adaptiveFactor = Math.min(
+        smoothFactor * (1 + absDistance / 500),
+        0.25
+      );
+      
+      // Apply smooth movement if we're not exactly at target, with a threshold
+      if (absDistance > 0.1) {
+        currentY += distance * adaptiveFactor;
+        // Update the state only when necessary
         setScrollY(currentY);
       }
-      requestAnimationFrame(animate);
+      
+      // Continue animation loop
+      rafId = requestAnimationFrame(animate);
     };
     
-    const animationId = requestAnimationFrame(animate);
+    // Start the animation loop
+    rafId = requestAnimationFrame(animate);
+    
+    // Register scroll listener with passive flag for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
     
+    // Cleanup
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(animationId);
+      observer.disconnect();
     };
-  }, []);
+  }, [isBannerVisible]); // Only re-run if visibility changes
 
   useEffect(() => {
     if (selectedImage) {
@@ -412,60 +455,47 @@ const Profile: React.FC<ProfileProps> = ({
     
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    // Increase padding to make images smaller
-    const padding = Math.min(50, Math.max(30, viewportWidth * 0.05)); // Larger padding
+    const padding = 40; // Use fixed padding for consistent results
     
-    // Calculate maximum available space - use more of the viewport
     const maxWidth = viewportWidth - (padding * 2);
     const maxHeight = viewportHeight - (padding * 2);
     
-    // Determine target dimensions based on natural image size if available
-    let targetWidth, targetHeight;
-    
-    if (naturalDimensions && naturalDimensions.width > 0 && naturalDimensions.height > 0) {
-      console.log('Using natural dimensions for expanded view:', naturalDimensions);
-      // Use natural dimensions but constrain to viewport
+    // Use memoization or cache if available
+    if (naturalDimensions?.width && naturalDimensions?.height) {
       const imageRatio = naturalDimensions.width / naturalDimensions.height;
+      const fillFactor = 0.9; // Slightly increased fill factor
       
-      // Reduce fill factor to make images smaller
-      const fillFactor = 0.85; // Reduced from 0.98 to 0.85
+      let targetWidth, targetHeight;
       
       if (imageRatio > maxWidth / maxHeight) {
-        // Width constrained
         targetWidth = maxWidth * fillFactor;
         targetHeight = targetWidth / imageRatio;
-    } else {
-        // Height constrained
+      } else {
         targetHeight = maxHeight * fillFactor;
         targetWidth = targetHeight * imageRatio;
       }
-    } else {
-      console.log('No natural dimensions available, using fallback ratio');
-      // Fallback if natural dimensions aren't available yet
-      const defaultRatio = startPosition.width / startPosition.height;
-      // Use less of the viewport space
-      targetWidth = maxWidth * 0.85; // Reduced from 0.95 to 0.85
-      targetHeight = targetWidth / defaultRatio;
       
-      if (targetHeight > maxHeight) {
-        targetHeight = maxHeight * 0.85; // Reduced from 0.95 to 0.85
-        targetWidth = targetHeight * defaultRatio;
+      const x = (viewportWidth - targetWidth) / 2;
+      const y = (viewportHeight - targetHeight) / 2;
+      
+      return { width: targetWidth, height: targetHeight, x, y };
     }
+    
+    // Use default ratio if dimensions aren't available
+    const aspectRatio = startPosition.width / startPosition.height;
+    
+    let targetWidth = maxWidth * 0.9;
+    let targetHeight = targetWidth / aspectRatio;
+    
+    if (targetHeight > maxHeight) {
+      targetHeight = maxHeight * 0.9;
+      targetWidth = targetHeight * aspectRatio;
     }
     
-    // Calculate center position
-    const centerX = viewportWidth / 2 - targetWidth / 2;
-    const centerY = viewportHeight / 2 - targetHeight / 2;
+    const x = (viewportWidth - targetWidth) / 2;
+    const y = (viewportHeight - targetHeight) / 2;
     
-    const result = {
-      width: targetWidth,
-      height: targetHeight,
-      x: centerX,
-      y: centerY
-    };
-    
-    console.log('Calculated expanded dimensions:', result);
-    return result;
+    return { width: targetWidth, height: targetHeight, x, y };
   };
 
   // Preload gallery images on mount to have them in cache
@@ -475,6 +505,17 @@ const Profile: React.FC<ProfileProps> = ({
       // Get size appropriate for this image
       const optimalSize = getGalleryImageSize(index);
       const url = getModifiedImageUrl(photo.image.uuid, optimalSize);
+      
+      // If we already have dimensions in the image data, use them immediately
+      if (photo.image.width && photo.image.height) {
+        // Store dimensions before loading to help with layout
+        loadedImages.current[photo.image.uuid] = {
+          src: url,
+          width: photo.image.width,
+          height: photo.image.height,
+          isFullRes: false
+        };
+      }
       
       // Set up preload and tracking
       const img = new Image();
@@ -491,6 +532,16 @@ const Profile: React.FC<ProfileProps> = ({
         if (img.naturalWidth >= 1200 || optimalSize >= 1200) {
           fullResLoadedImages.current.add(photo.image.uuid);
         }
+        
+        // Force update layout dimensions if containers exist
+        const imageElement = imageRefs.current[`image-${index}`];
+        if (imageElement) {
+          const container = imageElement.querySelector('div');
+          if (container) {
+            const aspectRatio = img.naturalWidth / img.naturalHeight;
+            container.style.paddingBottom = `${Math.floor(100 / aspectRatio)}%`;
+          }
+        }
       };
       img.src = url;
     });
@@ -498,235 +549,131 @@ const Profile: React.FC<ProfileProps> = ({
 
   // Modified handleImageClick to avoid reload and reuse loaded image
   const handleImageClick = (image: ProfileImage, index: number) => {
-    console.log('Image clicked:', image.id, 'Index:', index);
-    
+    // Get the element reference
     const imageElement = imageRefs.current[`image-${index}`];
-    if (imageElement) {
-      const rect = imageElement.getBoundingClientRect();
-      console.log('Image element rect:', rect);
-      
-      // Check if element has the loaded class
-      const isElementMarkedAsLoaded = imageElement.classList.contains('thumbnail-loaded');
-      
-      // More reliable check for whether full-res is loaded
-      const isFullResAlreadyLoaded = (isElementMarkedAsLoaded || 
-        (fullResLoadedImages.current.has(image.image.uuid) && 
-         loadedImages.current[image.image.uuid]?.isFullRes === true));
-      
-      console.log('Is full-res already loaded:', isFullResAlreadyLoaded);
-      
-      // Cache info - crucial for proper dimension calculation
-      const cachedImg = loadedImages.current[image.image.uuid];
-      console.log('Cached image info:', cachedImg);
-      
-      // Get the exact URL of the image element - which is already loaded in DOM
-      const imgElement = imageElement.querySelector('img');
-      let currentSrc = '';
-      let imgWidth = 0;
-      let imgHeight = 0;
-      if (imgElement) {
-        // Use the actual image source that's already loaded
-        currentSrc = imgElement.currentSrc || imgElement.src;
-        imgWidth = imgElement.naturalWidth || 0;
-        imgHeight = imgElement.naturalHeight || 0;
-        console.log('Current source from DOM:', currentSrc);
-        console.log('Image natural dimensions from DOM:', imgWidth, imgHeight);
-      }
-      
-      // IMPORTANT: For cached images, always set dimensions immediately
-      if (isFullResAlreadyLoaded && cachedImg?.isFullRes) {
-        console.log('Using cached dimensions for full-res image:', cachedImg.width, cachedImg.height);
-        setNaturalDimensions({
-          width: cachedImg.width,
-          height: cachedImg.height
-        });
-      } else if (isFullResAlreadyLoaded && imgWidth > 500 && imgHeight > 500) {
-        // If the DOM image is large enough, use its dimensions as fallback
-        console.log('Using DOM image dimensions:', imgWidth, imgHeight);
-        setNaturalDimensions({
-          width: imgWidth,
-          height: imgHeight
-        });
-      } else {
-        // For non-cached images, start with empty dimensions - will be updated later
-        console.log('No cached dimensions available, will load from high-res');
-        // Set approximate dimensions based on container to avoid jumps
-        const viewportWidth = window.innerWidth * 0.8;
-        const viewportHeight = window.innerHeight * 0.8;
-        const aspectRatio = rect.width / rect.height;
-        
-        let estimatedWidth, estimatedHeight;
-        if (aspectRatio > viewportWidth / viewportHeight) {
-          estimatedWidth = viewportWidth;
-          estimatedHeight = viewportWidth / aspectRatio;
-        } else {
-          estimatedHeight = viewportHeight;
-          estimatedWidth = viewportHeight * aspectRatio;
-        }
-        
-        setNaturalDimensions({
-          width: estimatedWidth,
-          height: estimatedHeight
-        });
-      }
-      
-      // Skip loading indicators if full-res is already loaded
-      setImageLoaded(isFullResAlreadyLoaded);
-      setLoadingProgress(isFullResAlreadyLoaded ? 100 : 5);
-      setShowLoadingBar(!isFullResAlreadyLoaded);
-      setSpringAnimation(false);
-      
-      // Clear any existing intervals
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-      
-      // Set thumbnail URL to the already loaded image - avoid redownloading
-      thumbnailUrl.current = currentSrc || getModifiedImageUrl(image.image.uuid, getGalleryImageSize(index));
-      
-      // Store position and size of the clicked element
-      setStartPosition({
-        x: rect.left,
-        y: rect.top,
-        width: rect.width,
-        height: rect.height,
-        centerX: rect.left + (rect.width / 2),
-        centerY: rect.top + (rect.height / 2)
+    if (!imageElement) return;
+    
+    // Find the img element
+    const imgElement = imageElement.querySelector('img');
+    if (!imgElement) return;
+    
+    // Get precise measurements
+    const rect = imgElement.getBoundingClientRect();
+    
+    // Check if high-res is already loaded
+    const isElementMarkedAsLoaded = imageElement.classList.contains('thumbnail-loaded');
+    const isFullResAlreadyLoaded = (isElementMarkedAsLoaded || 
+      (fullResLoadedImages.current.has(image.image.uuid) && 
+       loadedImages.current[image.image.uuid]?.isFullRes === true));
+    
+    // Get image source and dimensions
+    const currentSrc = imgElement.currentSrc || imgElement.src;
+    
+    // Set dimensions immediately using cached values if available
+    const cachedImg = loadedImages.current[image.image.uuid];
+    if (cachedImg?.width && cachedImg?.height) {
+      setNaturalDimensions({
+        width: cachedImg.width,
+        height: cachedImg.height
       });
+    } else {
+      // Fallback to viewport-based dimensions
+      const viewportWidth = window.innerWidth * 0.8;
+      const viewportHeight = window.innerHeight * 0.8;
+      const aspectRatio = rect.width / rect.height;
       
-      // Set selected image
-      setSelectedImage(image);
+      const estimatedWidth = aspectRatio > 1 
+        ? Math.min(viewportWidth, viewportHeight * aspectRatio)
+        : viewportHeight * aspectRatio;
+      const estimatedHeight = estimatedWidth / aspectRatio;
       
-      // Set showHighRes based on whether we already have the full-res image
-      setShowHighRes(isFullResAlreadyLoaded);
-      
-      // Start animation immediately after a short delay
-      setTimeout(() => {
-        console.log('Starting animation with dimensions:', naturalDimensions);
-        setIsAnimating(true);
-        
-        // If full-res is already loaded, skip loading sequence
-        if (isFullResAlreadyLoaded) {
-          console.log('Full-res already loaded, skipping loading sequence');
-          
-          // Make sure we have proper dimensions for cached images
-          if (!naturalDimensions || (!naturalDimensions.width && !naturalDimensions.height)) {
-            // Immediately force load the high-res just to get dimensions
-            const tempImg = new Image();
-            tempImg.onload = () => {
-              console.log('Loaded dimensions from temp image:', tempImg.naturalWidth, tempImg.naturalHeight);
-              setNaturalDimensions({
-                width: tempImg.naturalWidth,
-                height: tempImg.naturalHeight
-              });
-              
-              // Update cache
-              loadedImages.current[image.image.uuid] = {
-                src: tempImg.src,
-                width: tempImg.naturalWidth,
-                height: tempImg.naturalHeight,
-                isFullRes: true
-              };
-              
-              // Trigger spring animation after dimensions update
-        setTimeout(() => {
-                setSpringAnimation(true);
-              }, 100);
-            };
-            tempImg.src = getModifiedImageUrl(image.image.uuid, 1500);
-          } else {
-            // Trigger spring animation after a short delay
-            setTimeout(() => {
-              setSpringAnimation(true);
-        }, 300);
-          }
-          return; // Skip the loading sequence
-        }
-
-        // Rest of the loading sequence for non-cached images...
-
-        // Always fetch high-res image for proper scaling, unless we're sure it's already cached
-        if (!isFullResAlreadyLoaded) {
-          const highResUrl = getModifiedImageUrl(image.image.uuid, 1500);
-          console.log('Will load high-res from:', highResUrl);
-          
-          // Force getting dimensions from high-res image
-          const highResImage = new Image();
-          
-          // Handle high-res image load completion
-          highResImage.onload = () => {
-            console.log('High-res image loaded with dimensions:', highResImage.naturalWidth, highResImage.naturalHeight);
-            
-            // Save in cache for future use
-            loadedImages.current[image.image.uuid] = {
-              src: highResImage.src,
-              width: highResImage.naturalWidth,
-              height: highResImage.naturalHeight,
-              isFullRes: true
-            };
-            
-            // Mark as full-res loaded
-            fullResLoadedImages.current.add(image.image.uuid);
-            
-            // Update dimensions with high-res information
-            setNaturalDimensions({
-              width: highResImage.naturalWidth,
-              height: highResImage.naturalHeight
-            });
-            
-            // Stop progress simulation if still running
-            if (progressIntervalRef.current) {
-              clearInterval(progressIntervalRef.current);
-              progressIntervalRef.current = null;
-            }
-            
-            // Complete the loading sequence
-            setLoadingProgress(100);
-            
-            setTimeout(() => {
-              setImageLoaded(true);
-              setShowHighRes(true);
-              
-              // Trigger spring animation
-              setTimeout(() => {
-                setSpringAnimation(true);
-              }, 200);
-              
-              // Hide loading bar after a delay
-              setTimeout(() => {
-                setShowLoadingBar(false);
-              }, 700);
-            }, 300);
-          };
-          
-          // Handle loading errors
-          highResImage.onerror = () => {
-            console.error('Failed to load high-res image:', highResUrl);
-            
-            // Stop progress simulation
-            if (progressIntervalRef.current) {
-              clearInterval(progressIntervalRef.current);
-              progressIntervalRef.current = null;
-            }
-            
-            // Complete loading anyway and use thumbnail
-            setLoadingProgress(100);
-            setTimeout(() => {
-              setImageLoaded(true);
-              setShowHighRes(true); // We'll show the thumbnail instead
-              setSpringAnimation(true);
-              setTimeout(() => {
-                setShowLoadingBar(false);
-              }, 700);
-            }, 300);
-          };
-          
-          // Start loading the high-res version 
-          highResImage.src = highResUrl;
-        }
-      }, 50);
+      setNaturalDimensions({
+        width: estimatedWidth,
+        height: estimatedHeight
+      });
     }
+    
+    // Simplify loading logic
+    setImageLoaded(isFullResAlreadyLoaded);
+    setLoadingProgress(isFullResAlreadyLoaded ? 100 : 5);
+    setShowLoadingBar(!isFullResAlreadyLoaded);
+    setSpringAnimation(false);
+    
+    // Clean up any existing intervals
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    
+    // Set thumbnail URL
+    thumbnailUrl.current = currentSrc;
+    
+    // Store position precisely
+    setStartPosition({
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height,
+      centerX: rect.left + (rect.width / 2),
+      centerY: rect.top + (rect.height / 2)
+    });
+    
+    // Set selected image
+    setSelectedImage(image);
+    setShowHighRes(isFullResAlreadyLoaded);
+    
+    // Use requestAnimationFrame for smoother animation startup
+    requestAnimationFrame(() => {
+      setIsAnimating(true);
+      
+      // If high-res is already loaded, trigger spring animation after a frame
+      if (isFullResAlreadyLoaded) {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setSpringAnimation(true);
+          }, 100);
+        });
+        return;
+      }
+      
+      // Load high-res image
+      const highResUrl = getModifiedImageUrl(image.image.uuid, 1500);
+      const highResImage = new Image();
+      
+      highResImage.onload = () => {
+        // Update cache and dimensions
+        loadedImages.current[image.image.uuid] = {
+          src: highResImage.src,
+          width: highResImage.naturalWidth,
+          height: highResImage.naturalHeight,
+          isFullRes: true
+        };
+        
+        fullResLoadedImages.current.add(image.image.uuid);
+        
+        // Update UI state
+        setNaturalDimensions({
+          width: highResImage.naturalWidth,
+          height: highResImage.naturalHeight
+        });
+        
+        setLoadingProgress(100);
+        setImageLoaded(true);
+        setShowHighRes(true);
+        
+        // Trigger spring animation
+        requestAnimationFrame(() => {
+          setSpringAnimation(true);
+        });
+        
+        // Hide loading bar
+        setTimeout(() => {
+          setShowLoadingBar(false);
+        }, 400);
+      };
+      
+      highResImage.src = highResUrl;
+    });
   };
 
   // When high-res image is loaded
@@ -976,7 +923,10 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="min-h-screen bg-secondary text-white">
       {/* Banner Image - Fixed at top with parallax effect */}
-      <div className="fixed top-0 left-0 right-0 h-[50vh] z-0 overflow-hidden">
+      <div 
+        className="fixed top-0 left-0 right-0 h-[50vh] z-0 overflow-hidden"
+        ref={bannerRef}
+      >
         <div
           style={{
             backgroundImage: `url('/img/banner.JPEG')`,
@@ -984,13 +934,15 @@ const Profile: React.FC<ProfileProps> = ({
             backgroundPosition: 'center 30%',
             height: 'calc(100% + 100px)',
             width: '100%',
-            transform: `translate3d(0, ${-50 + scrollY * -0.2}px, 0)`,
-            willChange: 'transform',
-            transition: 'transform 0.05s cubic-bezier(0.33, 1, 0.68, 1)'
+            transform: isBannerVisible ? 
+              `translate3d(0, ${-50 + scrollY * -0.2}px, 0)` : 
+              'translate3d(0, -50px, 0)',
+            willChange: isBannerVisible ? 'transform' : 'auto',
+            transition: 'transform 0.08s cubic-bezier(0.22, 1, 0.36, 1)'
           }}
         ></div>
-        </div>
-        
+      </div>
+      
       {/* Gradient Overlay - Fixed with banner */}
       <div className="fixed top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-transparent to-secondary z-0 opacity-80"></div>
       
@@ -1058,7 +1010,9 @@ const Profile: React.FC<ProfileProps> = ({
               transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
               width: 'max-content',
               paddingLeft: '0.25rem',
-              paddingRight: '0.25rem'
+              paddingRight: '0.25rem',
+              display: 'flex',
+              transition: 'transform 0.3s ease-in-out'
             }}
           >
                 {extendedImages.map((image, index) => {
@@ -1066,24 +1020,19 @@ const Profile: React.FC<ProfileProps> = ({
                   const isLoaded = fullResLoadedImages.current.has(image.image.uuid);
                   
                   return (
-              <div
+              <ImageItem
                 key={`${image.id}-${index}`}
-                      className={`carousel-item relative z-20 cursor-pointer overflow-hidden ${isLoaded ? 'thumbnail-loaded' : ''}`}
-                onClick={() => !isAnimating && handleImageClick(image, index)}
+                      image={image}
+                      index={index}
+                      variant="carousel"
+                      itemWidth={itemWidth}
+                      isLoaded={isLoaded}
+                      isAnimating={isAnimating}
+                      onClick={() => !isAnimating && handleImageClick(image, index)}
                       ref={el => imageRefs.current[`image-${index}`] = el}
-                style={{ 
-                  width: `${itemWidth}px`,
-                  flexBasis: `${itemWidth}px`
-                }}
-              >
-                <img
-                        src={getModifiedImageUrl(image.image.uuid)}
-                  alt={`${profile.displayName}'s photo ${index + 1}`}
-                  loading="lazy"
-                  draggable="false"
-                        className="w-full h-full object-cover pointer-events-auto transition-transform duration-300 hover:scale-110"
+                      getModifiedImageUrl={getModifiedImageUrl}
+                      profileName={profile.displayName}
                 />
-              </div>
                   );
                 })}
           </div>
@@ -1106,148 +1055,78 @@ const Profile: React.FC<ProfileProps> = ({
           {/* Left Column */}
           <div className="lg:col-span-3">
             {/* About Section */}
-            <div className="section-card">
-              <h2 className="section-title">About</h2>
-              <div className="space-y-3">
-                {mainInfo.map((info) => (
-                  <div key={info.id} className="flex-center gap-small">
-                    <info.icon className="icon-small icon-accent" />
-                    <span className="section-text">{info.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InfoCard title="About">
+              {mainInfo.map((info) => (
+                <IconText key={info.id} icon={info.icon} text={info.title} />
+              ))}
+            </InfoCard>
 
             {/* Stats Section */}
-            <div className="section-card">
-              <h2 className="section-title">Stats</h2>
-              <div className="space-y-4">
-                {statsInfo.map((section) => (
-                  <div key={section.category}>
-                    <h3 className="text-sm font-semibold icon-accent mb-2">{section.category}</h3>
-                    <div className="space-y-2">
-                      {section.items.map((item) => (
-                        <div key={item.id} className="flex-center gap-small">
-                          <item.icon className="icon-small icon-accent" />
-                          <span className="section-text">{item.title}</span>
-                        </div>
-                      ))}
-                    </div>
+            <InfoCard title="Stats">
+              {statsInfo.map((section) => (
+                <div key={section.category}>
+                  <h3 className="text-sm font-semibold icon-accent mb-2">{section.category}</h3>
+                  <div className="space-y-2">
+                    {section.items.map((item) => (
+                      <IconText key={item.id} icon={item.icon} text={item.title} />
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              ))}
+            </InfoCard>
 
             {/* Hobbies Section */}
-            <div className="section-card">
-              <h2 className="section-title">Hobbies & Skills</h2>
-              <div className="space-y-2">
-                {hobbies.map((hobby) => (
-                  <div key={hobby.id} className="flex-center gap-small">
-                    <hobby.icon className="icon-small icon-accent" />
-                    <span className="section-text">{hobby.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InfoCard title="Hobbies & Skills">
+              {hobbies.map((hobby) => (
+                <IconText key={hobby.id} icon={hobby.icon} text={hobby.title} />
+              ))}
+            </InfoCard>
 
             {/* Languages Section */}
-            <div className="section-card">
-              <h2 className="section-title">Languages</h2>
-              <div className="space-y-2">
-                {languages.map((language) => (
-                  <div key={language.id} className="flex-center gap-small">
-                    <span className="text-xl">{language.flag}</span>
-                    <span className="section-text">{language.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InfoCard title="Languages">
+              {languages.map((language) => (
+                <IconText key={language.id} icon={() => <span className="text-xl">{language.flag}</span>} text={language.name} />
+              ))}
+            </InfoCard>
 
             {/* Tech Setup */}
-            <div className="section-card">
-              <h2 className="section-title">Tech Setup</h2>
-              <div className="space-y-2">
-                {techSetup.map((item) => (
-                  <div key={item.id} className="flex-center gap-small">
-                    <item.icon className="icon-small icon-accent" />
-                    <span className="section-text">{item.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InfoCard title="Tech Setup">
+              {techSetup.map((item) => (
+                <IconText key={item.id} icon={item.icon} text={item.title} />
+              ))}
+            </InfoCard>
 
             {/* Platforms */}
-            <div className="section-card">
-              <h2 className="section-title">Platforms</h2>
-              <div className="space-y-2">
-                {platforms.map((platform) => (
-                  <div key={platform.id} className="flex-center gap-small">
-                    <FontAwesomeIcon icon={platform.icon} className="icon-small icon-accent" />
-                    <span className="section-text">{platform.title}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <InfoCard title="Platforms">
+              {platforms.map((platform) => (
+                <IconText key={platform.id} icon={() => <FontAwesomeIcon icon={platform.icon} className="icon-small icon-accent" />} text={platform.title} />
+              ))}
+            </InfoCard>
 
             {/* Social Links */}
-            <div className="section-card">
-              <h2 className="section-title">Social Links</h2>
-              <div className="space-y-3">
-                {publicSocialAccounts.map((account) => {
-                  let icon;
+            <InfoCard title="Social Links">
+              {publicSocialAccounts.map((account) => (
+                <IconText key={account.id} icon={() => {
                   switch (account.socialNetwork.toLowerCase()) {
                     case 'twitter':
-                      icon = faTwitter;
-                      break;
+                      return <FontAwesomeIcon icon={faTwitter} className="icon-small" />;
                     case 'instagram':
-                      icon = faInstagram;
-                      break;
+                      return <FontAwesomeIcon icon={faInstagram} className="icon-small" />;
                     case 'discord':
-                      icon = faDiscord;
-                      break;
+                      return <FontAwesomeIcon icon={faDiscord} className="icon-small" />;
                     case 'steam':
-                      icon = faSteam;
-                      break;
+                      return <FontAwesomeIcon icon={faSteam} className="icon-small" />;
                     default:
-                      icon = GlobeAltIcon;
+                      return <GlobeAltIcon className="icon-small" />;
                   }
-
-                  return (
-                    <a
-                      key={account.id}
-                      href={account.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="social-link"
-                    >
-                      <div className="social-icon-container section-card">
-                        {typeof icon === 'function' ? (
-                          React.createElement(icon, { className: "icon-small" })
-                        ) : (
-                          <FontAwesomeIcon icon={icon} className="icon-small" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex-center gap-small">
-                          <span className="section-text">{account.displayName}</span>
-                          {account.isVerified && (
-                            <CheckBadgeIcon className="icon-small icon-accent" />
-                          )}
-                        </div>
-                        <span className="text-xs text-gray-400">{account.value}</span>
-                      </div>
-                      <ArrowTopRightOnSquareIcon className="icon-small icon-accent" />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
+                }} text={account.displayName} />
+              ))}
+            </InfoCard>
           </div>
 
           {/* Right Column - Photo Grid */}
           <div className="lg:col-span-9">
-                  <div key={galleryKey} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gallery-grid">
+              <div key={galleryKey} className="columns-3 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-5 gap-2 lg:gap-4 gallery-grid">
                     {publicImages.map((photo, index) => {
                       // Calculate optimal image size for this grid item
                       const optimalSize = getGalleryImageSize(index);
@@ -1255,21 +1134,41 @@ const Profile: React.FC<ProfileProps> = ({
                       // Check if full-res is loaded for this image
                       const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
                       
+                      // Calculate a minimum height based on image dimensions in the data if available
+                      // This helps prevent layout shifts while loading
+                      const getMinHeight = () => {
+                        // If we have cached dimensions, use those for ratio calculation
+                        const cachedImg = loadedImages.current[photo.image.uuid];
+                        if (cachedImg && cachedImg.width && cachedImg.height) {
+                          const aspectRatio = cachedImg.width / cachedImg.height;
+                          return `${Math.floor(100 / aspectRatio)}%`;
+                        }
+
+                        // If we have dimensions in the original data
+                        if (photo.image.width && photo.image.height) {
+                          const aspectRatio = photo.image.width / photo.image.height;
+                          return `${Math.floor(100 / aspectRatio)}%`;
+                        }
+                        
+                        // Default fallback for unknown dimensions (1:1 ratio as fallback)
+                        return '100%';
+                      };
+                      
                       return (
-                <div
-                          key={photo.id + (imageCacheBuster || '')}
+                <ImageItem
+                          key={photo.id + (imageCacheBuster?.toString() || '')}
+                  image={photo}
+                  index={index}
+                  variant="gallery"
+                  isLoaded={isLoaded}
+                  cacheBuster={imageCacheBuster?.toString() || null}
                   ref={el => imageRefs.current[`image-${index}`] = el}
-                          className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${isLoaded ? 'thumbnail-loaded' : ''}`}
                   onClick={() => handleImageClick(photo, index)}
-                >
-                  <img
-                            src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
-                    alt={`${profile.displayName}'s photo ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                            loading="lazy"
-                            key={imageCacheBuster || undefined}
-                  />
-                </div>
+                  getModifiedImageUrl={getModifiedImageUrl}
+                  getMinHeight={getMinHeight}
+                  optimalSize={optimalSize}
+                  onImageLoad={handleHighResImageLoad}
+                />
                       );
                     })}
                   </div>
@@ -1282,111 +1181,21 @@ const Profile: React.FC<ProfileProps> = ({
 
       {/* Image Preview Modal */}
       {selectedImage && startPosition && (
-        <div
-          className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-all duration-300 ease-out`}
-          onClick={handleClosePreview}
-          style={{ 
-            pointerEvents: isAnimating ? 'auto' : 'none',
-            visibility: isAnimating ? 'visible' : 'hidden'
-          }}
-        >
-          <button
-            className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
-            onClick={(e) => handleClosePreview(e)}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <XMarkIcon className="w-8 h-8" />
-          </button>
-          
-          {/* Loading indicator */}
-          {isAnimating && !imageLoaded && showLoadingBar && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 opacity-80">
-              <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-          )}
-          
-          {/* Progress Bar */}
-          {isAnimating && showLoadingBar && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-48 md:w-64 z-50">
-              <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg">
-                <div className="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[rgb(255,138,128)] to-white rounded-full transition-all duration-200 ease-out"
-                    style={{ width: `${loadingProgress}%` }}
-                  ></div>
-                </div>
-                <div className="text-center text-white/80 text-xs mt-2 font-medium">
-                  {loadingProgress < 100 
-                    ? `Loading image... ${Math.round(loadingProgress)}%` 
-                    : 'Rendering image...'}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div
-            className={`fixed will-change-transform ${springAnimation ? 'transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'transition-all duration-600 ease-out'}`}
-            style={{
-              width: isAnimating ? calculateExpandedDimensions()?.width : startPosition.width,
-              height: isAnimating ? calculateExpandedDimensions()?.height : startPosition.height,
-              transform: isAnimating
-                ? `translate3d(${calculateExpandedDimensions()?.x}px, ${calculateExpandedDimensions()?.y}px, 0) ${springAnimation ? 'scale(1.02)' : 'scale(1)'}`
-                : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
-              transformOrigin: 'center',
-              boxShadow: isAnimating ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
-              overflow: 'hidden',
-              borderRadius: '0.75rem',
-              backgroundColor: 'rgba(0,0,0,0.2)',
-              zIndex: isAnimating ? 55 : 1,
-              transition: isAnimating ? undefined : 'all 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out, transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {/* Simplified container structure */}
-            <div className="absolute inset-0 rounded-xl overflow-hidden">
-              {/* Single content container */}
-              <div className="relative w-full h-full">
-                {/* Thumbnail background with blend mode */}
-                <div
-                  className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-                  style={{
-                    backgroundImage: `url(${thumbnailUrl.current})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundRepeat: 'no-repeat',
-                    opacity: showHighRes && imageLoaded ? 0 : 0.9,
-                    filter: 'blur(0px)',
-                    transform: 'scale(1.01)', // Slightly larger to avoid corner gaps
-                  }}
-                />
-                
-                {/* High-res image container - only render when needed */}
-                {(showHighRes || imageLoaded) && (
-                  <div
-                    className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-                    style={{
-                      opacity: showHighRes && imageLoaded ? 1 : 0,
-                      backgroundColor: 'rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {/* Actual high-res image - only render when needed */}
-                    {showHighRes && (
-                      <img
-                        src={getModifiedImageUrl(selectedImage.image.uuid, 1500)}
-                        alt="Full resolution preview"
-                        className="w-full h-full object-contain"
-                        onLoad={handleHighResImageLoad}
-              loading="eager"
-            />
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ImagePreviewModal
+          selectedImage={selectedImage}
+          startPosition={startPosition}
+          isAnimating={isAnimating}
+          imageLoaded={imageLoaded}
+          showLoadingBar={showLoadingBar}
+          loadingProgress={loadingProgress}
+          springAnimation={springAnimation}
+          showHighRes={showHighRes}
+          thumbnailUrl={thumbnailUrl.current}
+          calculateExpandedDimensions={calculateExpandedDimensions}
+          onClose={handleClosePreview}
+          getModifiedImageUrl={getModifiedImageUrl}
+          onHighResImageLoad={handleHighResImageLoad}
+        />
       )}
 
       {/* Debug buttons */}
