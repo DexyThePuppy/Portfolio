@@ -1,11 +1,11 @@
 import React from 'react';
 import { ArrowTopRightOnSquareIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 interface SocialLinkProps {
   url: string;
-  icon: IconDefinition | React.ElementType;
+  icon: IconProp | React.ElementType;
   displayName: string;
   value: string;
   isVerified: boolean;
@@ -28,7 +28,7 @@ const SocialLink: React.FC<SocialLinkProps> = ({
       {typeof icon === 'function' ? (
         React.createElement(icon, { className: "icon-small" })
       ) : (
-        <FontAwesomeIcon icon={icon} className="icon-small" />
+        <FontAwesomeIcon icon={icon as IconProp} className="icon-small" />
       )}
     </div>
     <div className="flex-1">
