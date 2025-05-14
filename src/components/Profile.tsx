@@ -34,8 +34,7 @@ import {
   HandRaisedIcon,
   FaceSmileIcon,
   CloudIcon,
-  WrenchScrewdriverIcon,
-  CakeIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import InfoCard from './InfoCard';
 import IconText from './IconText';
