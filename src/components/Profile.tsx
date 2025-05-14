@@ -1126,7 +1126,7 @@ const Profile: React.FC<ProfileProps> = ({
 
           {/* Right Column - Photo Grid */}
           <div className="lg:col-span-9">
-              <div key={galleryKey} className="columns-3 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-5 gap-2 lg:gap-4 gallery-grid">
+              <div key={galleryKey} className="columns-3 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-5 gap-2.5 lg:gap-2.5 gallery-grid">
                     {publicImages.map((photo, index) => {
                       // Calculate optimal image size for this grid item
                       const optimalSize = getGalleryImageSize(index);

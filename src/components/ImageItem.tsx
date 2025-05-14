@@ -105,7 +105,7 @@ const ImageItem = React.memo(React.forwardRef<HTMLDivElement, ImageItemProps>((
     <div
       key={image.id + (cacheBuster || '')}
       ref={ref}
-      className={`mb-2 lg:mb-4 inline-block w-full ${isLoaded ? 'thumbnail-loaded' : ''}`}
+      className={`mb-1.5 lg:mb-1.5 inline-block w-full ${isLoaded ? 'thumbnail-loaded' : ''}`}
       onClick={handleClick}
     >
       <div 
