@@ -18,10 +18,8 @@ import {
   faVenusMars
 } from '@fortawesome/free-solid-svg-icons';
 import { 
-  MapPinIcon, 
   UserIcon, 
   StarIcon,
-  UserGroupIcon,
   GlobeAltIcon,
   HeartIcon,
   ComputerDesktopIcon,
