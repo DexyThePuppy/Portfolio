@@ -233,7 +233,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
         <div className="h-[30vh]" />
 
         {/* Main Content with dark background */}
-        <div className="bg-secondary min-h-[70vh] rounded-t-3xl shadow-lg pt-10">
+        <div className="bg-secondary min-h-[35vh] rounded-t-3xl shadow-lg pt-10">
           <div className="container mx-auto px-4">
             <ProfileHeader
               displayName={profile.displayName}
