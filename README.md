@@ -8,7 +8,7 @@ Visit the live site at: [https://DexyThePuppy.github.io/Portfolio](https://DexyT
 
 ## Development
 
-This project was bootstrapped with Create React App and uses:
+This project uses:
 - React 18
 - TypeScript
 - Tailwind CSS
@@ -29,12 +29,17 @@ npm install
 
 3. Start the development server:
 ```bash
-npm start
+npm run dev
 ```
 
 4. Build for production:
 ```bash
 npm run build
+```
+
+5. Preview the production build locally:
+```bash
+npm run preview
 ```
 
 ### Deployment
