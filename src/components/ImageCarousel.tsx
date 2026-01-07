@@ -164,8 +164,9 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
               className={`carousel-item relative z-20 cursor-pointer overflow-hidden ${isLoaded ? 'thumbnail-loaded' : ''}`}
               onClick={() => handleImageClickInternal(image, index)}
               ref={el => imageRefs.current[`image-${index}`] = el}
-              style={{ 
+              style={{
                 width: `${itemWidth}px`,
+                height: `${itemWidth}px`,
                 flexBasis: `${itemWidth}px`
               }}
             >

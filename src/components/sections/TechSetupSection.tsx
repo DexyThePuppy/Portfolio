@@ -113,7 +113,7 @@ const TechSetupSection: React.FC<TechSetupSectionProps> = ({ items }) => {
             </div>
 
             {/* Category tag on the side */}
-            <span className="relative text-[8px] uppercase tracking-wider text-gray-500 font-medium px-1.5 py-0.5 bg-black/30 rounded flex-shrink-0">
+            <span className="relative text-[8px] uppercase tracking-wider text-gray-500 font-medium px-1.5 py-0.5 bg-black/30 rounded flex-shrink-0 hidden md:inline">
               {item.category}
             </span>
 
