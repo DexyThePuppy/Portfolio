@@ -66,7 +66,7 @@ const App: React.FC = () => {
     profile: {
       id: "7667",
       uuid: "2cb7cebf-8ec9-439c-85e0-0cb8f81e8cec",
-      displayName: "Dexy 🐾",
+      displayName: "Dexy",
       username: "dexy",
       roles: ["supporter_vip"],
       age: 23,

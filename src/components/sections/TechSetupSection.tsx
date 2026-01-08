@@ -58,10 +58,10 @@ const TechSetupSection: React.FC<TechSetupSectionProps> = ({ items }) => {
             target="_blank"
             rel="noopener noreferrer"
             className={`
-              group relative flex items-center gap-2 p-2 rounded-lg
+              group relative flex items-center gap-2 p-2 rounded-xl
               bg-gradient-to-br ${item.color || 'from-gray-500/20 to-gray-600/20'}
-              border border-white/5
-              hover:border-white/20 hover:scale-[1.02]
+              border border-[rgb(255,138,128)]/10
+              hover:border-[rgb(255,138,128)]/30 hover:scale-105
               transition-all duration-300 ease-out
               cursor-pointer overflow-hidden
             `}

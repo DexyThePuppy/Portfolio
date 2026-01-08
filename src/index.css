@@ -298,4 +298,56 @@ h4, h5, h6 {
 
 .group:hover .tech-icon-rotate {
   transform: rotate(var(--icon-hover-rotation, 0deg)) scale(1.1);
+}
+
+/* Additional icon scaling for profile header, about, stats, and hobbies */
+.info-card:hover .tech-icon-rotate,
+.group:hover .tech-icon-rotate {
+  transform: rotate(var(--icon-hover-rotation, 0deg)) scale(1.2);
+}
+
+/* Consistent Card Design System */
+.card-base {
+  background-color: rgba(0, 0, 0, 0.192);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 138, 128, 0.1);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s ease-out;
+}
+
+.card-hover {
+  transition: all 0.3s ease-out;
+}
+
+.card-hover:hover {
+  border-color: rgba(255, 138, 128, 0.3);
+  transform: scale(1.02);
+}
+
+.card-glass {
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 138, 128, 0.1);
+  transition: all 0.3s ease-out;
+}
+
+.card-glass:hover {
+  border-color: rgba(255, 138, 128, 0.3);
+  transform: scale(1.05);
+}
+
+/* Info card variant - for small profile info items */
+.info-card {
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 138, 128, 0.1);
+  transition: all 0.3s ease-out;
+  padding: 0.5rem 0.75rem;
+}
+
+.info-card:hover {
+  border-color: rgba(255, 138, 128, 0.3);
+  transform: scale(1.05);
 } 
