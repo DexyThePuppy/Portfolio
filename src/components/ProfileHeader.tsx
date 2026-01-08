@@ -12,7 +12,7 @@ interface ProfileHeaderProps {
   profileImageUrl: string;
   isVip: boolean;
   location: {
-    place: string;
+    region: string;
     country: string;
   };
   age: number;
@@ -44,7 +44,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-gray-200 max-w-5xl">
           <div className="flex items-center gap-2">
             <MapPinIcon className="w-5 h-5 text-[rgb(255,138,128)]" />
-            <span>{location.place}, {location.country}</span>
+            <span>{location.region}, {location.country}</span>
           </div>
           <div className="flex items-center gap-2">
             <CakeIcon className="w-5 h-5 text-[rgb(255,138,128)]" />

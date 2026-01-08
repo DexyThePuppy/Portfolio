@@ -41,12 +41,9 @@ interface ProfileImage {
 }
 
 interface Place {
-  place: string;
   region: string;
   country: string;
   countryCode: string;
-  longitude: number;
-  latitude: number;
 }
 
 interface ProfileLocation {
@@ -240,7 +237,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
               profileImageUrl={getModifiedImageUrl(profile.profileImage.image.uuid)}
               isVip={isVip}
               location={{
-                place: profile.location.place.place,
+                region: profile.location.place.region,
                 country: profile.location.place.country,
               }}
               age={profile.age}

@@ -54,7 +54,7 @@ export interface TechItem {
 // Main Info - Updated from new data
 export const mainInfo: InfoItem[] = [
   { id: '1', title: 'Main', icon: UserIcon },
-  { id: '2', title: '23 | Austria', icon: MapPinIcon },
+  { id: '2', title: 'Salzbug | Austria', icon: MapPinIcon },
   { id: '3', title: 'He/Him', icon: UserIcon },
   { id: '4', title: 'Shep × Bernese × Dragon', icon: UserIcon },
   { id: '5', title: 'Single and looking', icon: HeartIcon },

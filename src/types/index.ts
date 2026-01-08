@@ -16,12 +16,9 @@ export interface ProfileImage {
 
 // Location Types
 export interface Place {
-  place: string;
   region: string;
   country: string;
   countryCode: string;
-  longitude: number;
-  latitude: number;
 }
 
 export interface ProfileLocation {

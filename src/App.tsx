@@ -86,20 +86,14 @@ const App: React.FC = () => {
       location: {
         type: "gps",
         homePlace: {
-          place: "Bischofshofen",
           region: "Salzburg",
           country: "Austria",
-          countryCode: "AT",
-          longitude: 13.21944,
-          latitude: 47.41722
+          countryCode: "AT"
         },
         place: {
-          place: "Bischofshofen",
           region: "Salzburg",
           country: "Austria",
-          countryCode: "AT",
-          longitude: 13.21944,
-          latitude: 47.41722
+          countryCode: "AT"
         }
       },
       images,
