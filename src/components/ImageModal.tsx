@@ -1,326 +1,382 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import type { ProfileImage } from '../types/index';
 
-interface ProfileImage {
-  id: string;
-  image: {
-    uuid: string;
-    contentRating: string;
-    width: number;
-    height: number;
-    blurHash: string;
-  };
-  accessPermission: string;
-  isAd: boolean;
-}
-
-interface StartPosition {
+interface ImagePosition {
   x: number;
   y: number;
   width: number;
   height: number;
-  centerX?: number;
-  centerY?: number;
 }
 
 interface ImageModalProps {
   selectedImage: ProfileImage | null;
-  startPosition: StartPosition | null;
+  startPosition: ImagePosition | null;
   thumbnailUrl: string;
-  getImageUrl: (uuid: string, width?: number) => string;
+  initialRotation: number;
+  openNonce: number;
   onClose: () => void;
-  onFullResLoaded: (uuid: string, width: number, height: number) => void;
-  isFullResAlreadyLoaded: boolean;
+  getImageUrl: (uuid: string, size?: number) => string;
 }
 
 const ImageModal: React.FC<ImageModalProps> = ({
   selectedImage,
   startPosition,
   thumbnailUrl,
-  getImageUrl,
+  initialRotation,
+  openNonce,
   onClose,
-  onFullResLoaded,
-  isFullResAlreadyLoaded,
+  getImageUrl,
 }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showHighRes, setShowHighRes] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  // Core animation state
+  const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  
+  // Image loading state
+  const [mediumResLoaded, setMediumResLoaded] = useState(false);
+  const [highResStatus, setHighResStatus] = useState<'idle' | 'loading' | 'loaded' | 'failed'>('idle');
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [showLoadingBar, setShowLoadingBar] = useState(false);
-  const [springAnimation, setSpringAnimation] = useState(false);
-  const [naturalDimensions, setNaturalDimensions] = useState<{width: number; height: number} | null>(null);
-  const progressIntervalRef = useRef<number | null>(null);
-
-  // Initialize modal when image is selected
+  
+  // Rotation state - starts with gallery rotation, resets when high-res loads
+  const [rotation, setRotation] = useState(0);
+  
+  // Scale state - for drop-in effect
+  const [scale, setScale] = useState(1);
+  
+  // Refs
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rotationResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isClosingRef = useRef(false);
+  const loadTokenRef = useRef(0);
+  
+  // Calculate expanded dimensions to fit screen
+  const calculateExpandedDimensions = useCallback(() => {
+    if (!imageDimensions) return null;
+    
+    const padding = 80;
+    const maxWidth = window.innerWidth - padding * 2;
+    const maxHeight = window.innerHeight - padding * 2;
+    
+    const imageAspect = imageDimensions.width / imageDimensions.height;
+    const screenAspect = maxWidth / maxHeight;
+    
+    let width: number, height: number;
+    
+    if (imageAspect > screenAspect) {
+      width = Math.min(maxWidth, imageDimensions.width);
+      height = width / imageAspect;
+    } else {
+      height = Math.min(maxHeight, imageDimensions.height);
+      width = height * imageAspect;
+    }
+    
+    return {
+      width,
+      height,
+      x: (window.innerWidth - width) / 2,
+      y: (window.innerHeight - height) / 2,
+    };
+  }, [imageDimensions]);
+  
+  // Start a fresh load cycle (robust against rapid / repeated opens)
   useEffect(() => {
-    if (selectedImage && startPosition) {
-      // Disable body scroll
-      document.body.style.overflow = 'hidden';
-      
-      // Set initial states
-      setImageLoaded(isFullResAlreadyLoaded);
-      setLoadingProgress(isFullResAlreadyLoaded ? 100 : 5);
-      setShowLoadingBar(!isFullResAlreadyLoaded);
-      setSpringAnimation(false);
-      setShowHighRes(isFullResAlreadyLoaded);
+    // Invalidate any previous in-flight loads
+    loadTokenRef.current += 1;
+    
+    // Clear timers/intervals from previous cycle
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (progressStartTimeoutRef.current) {
+      clearTimeout(progressStartTimeoutRef.current);
+      progressStartTimeoutRef.current = null;
+    }
+    if (rotationResetTimeoutRef.current) {
+      clearTimeout(rotationResetTimeoutRef.current);
+      rotationResetTimeoutRef.current = null;
+    }
 
-      // Set initial dimensions estimate
-      if (!isFullResAlreadyLoaded) {
-        const viewportWidth = window.innerWidth * 0.8;
-        const viewportHeight = window.innerHeight * 0.8;
-        const aspectRatio = startPosition.width / startPosition.height;
-        
-        let estimatedWidth, estimatedHeight;
-        if (aspectRatio > viewportWidth / viewportHeight) {
-          estimatedWidth = viewportWidth;
-          estimatedHeight = viewportWidth / aspectRatio;
-        } else {
-          estimatedHeight = viewportHeight;
-          estimatedWidth = viewportHeight * aspectRatio;
-        }
-        
-        setNaturalDimensions({
-          width: estimatedWidth,
-          height: estimatedHeight
-        });
+    if (!selectedImage) {
+      setMediumResLoaded(false);
+      setHighResStatus('idle');
+      setImageDimensions(null);
+      setLoadingProgress(0);
+      setRotation(0);
+      setScale(1);
+      return;
+    }
+
+    // Every open starts fresh
+    setIsOpen(true);
+    setIsClosing(false);
+    isClosingRef.current = false;
+
+    setMediumResLoaded(false);
+    setHighResStatus('loading');
+    setLoadingProgress(0);
+    setRotation(initialRotation);
+    
+    // Drop-in effect: scale down then bounce back
+    setScale(0.95);
+    setTimeout(() => setScale(1), 100);
+
+    // Start progress simulation shortly after open (real load completion comes from <img onLoad>)
+    progressStartTimeoutRef.current = setTimeout(() => {
+      if (progressIntervalRef.current) return;
+      progressIntervalRef.current = setInterval(() => {
+        setLoadingProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+      }, 120);
+    }, 100);
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
       }
+      if (progressStartTimeoutRef.current) {
+        clearTimeout(progressStartTimeoutRef.current);
+        progressStartTimeoutRef.current = null;
+      }
+      if (rotationResetTimeoutRef.current) {
+        clearTimeout(rotationResetTimeoutRef.current);
+        rotationResetTimeoutRef.current = null;
+      }
+    };
+  }, [selectedImage, initialRotation, openNonce]);
 
-      // Start animation
-      setTimeout(() => {
-        setIsAnimating(true);
-        
-        if (isFullResAlreadyLoaded) {
-          setTimeout(() => setSpringAnimation(true), 300);
-          return;
-        }
+  const handleMediumLoaded = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    // Ignore stale loads across rapid switches
+    const token = loadTokenRef.current;
+    // Touch token to ensure handler sees latest (no-op, just clarity)
+    void token;
 
-        // Load high-res image
-        const highResUrl = getImageUrl(selectedImage.image.uuid, 1500);
-        const highResImage = new Image();
-        
-        highResImage.onload = () => {
-          onFullResLoaded(selectedImage.image.uuid, highResImage.naturalWidth, highResImage.naturalHeight);
-          
-          setNaturalDimensions({
-            width: highResImage.naturalWidth,
-            height: highResImage.naturalHeight
-          });
-          
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-            progressIntervalRef.current = null;
-          }
-          
-          setLoadingProgress(100);
-          
-          setTimeout(() => {
-            setImageLoaded(true);
-            setShowHighRes(true);
-            setTimeout(() => setSpringAnimation(true), 200);
-            setTimeout(() => setShowLoadingBar(false), 700);
-          }, 300);
-        };
-        
-        highResImage.onerror = () => {
-          if (progressIntervalRef.current) {
-            clearInterval(progressIntervalRef.current);
-            progressIntervalRef.current = null;
-          }
-          
-          setLoadingProgress(100);
-          setTimeout(() => {
-            setImageLoaded(true);
-            setShowHighRes(true);
-            setSpringAnimation(true);
-            setTimeout(() => setShowLoadingBar(false), 700);
-          }, 300);
-        };
-        
-        highResImage.src = highResUrl;
-      }, 50);
+    const img = e.currentTarget;
+    setMediumResLoaded(true);
+    setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+  }, []);
+
+  const handleHighLoaded = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (progressStartTimeoutRef.current) {
+      clearTimeout(progressStartTimeoutRef.current);
+      progressStartTimeoutRef.current = null;
+    }
+    setLoadingProgress(100);
+    setHighResStatus('loaded');
+
+    if (rotationResetTimeoutRef.current) {
+      clearTimeout(rotationResetTimeoutRef.current);
+      rotationResetTimeoutRef.current = null;
+    }
+    rotationResetTimeoutRef.current = setTimeout(() => {
+      setRotation(0);
+    }, 200);
+  }, []);
+
+  const handleHighError = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (progressStartTimeoutRef.current) {
+      clearTimeout(progressStartTimeoutRef.current);
+      progressStartTimeoutRef.current = null;
+    }
+    setLoadingProgress(100);
+    setHighResStatus('failed');
+  }, []);
+  
+  // Handle body scroll lock
+  useEffect(() => {
+    if (selectedImage && !isClosing) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
     
     return () => {
       document.body.style.overflow = '';
     };
-  }, [selectedImage, startPosition, isFullResAlreadyLoaded, getImageUrl, onFullResLoaded]);
-
+  }, [selectedImage, isClosing]);
+  
+  // Handle close
   const handleClose = useCallback((e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
+    if (e) {
+      e.stopPropagation();
     }
     
-    setShowLoadingBar(false);
-    setIsAnimating(false);
-    setShowHighRes(false);
-    setImageLoaded(false);
-    setSpringAnimation(false);
+    // Prevent multiple close calls
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
     
-    setTimeout(() => {
-      setNaturalDimensions(null);
-      setLoadingProgress(0);
+    // Start close animation with scale-down effect
+    setIsClosing(true);
+    setIsOpen(false);
+    setScale(0.95); // Scale down when closing
+    
+    // Clear any existing timeout
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    
+    // Wait for animation to complete, then notify parent
+    closeTimeoutRef.current = setTimeout(() => {
+      isClosingRef.current = false;
+      setIsClosing(false);
       onClose();
-    }, 250);
+      closeTimeoutRef.current = null;
+    }, 300);
   }, [onClose]);
-
-  const handleHighResImageLoad = () => {
-    setImageLoaded(true);
-    setTimeout(() => setSpringAnimation(true), 50);
-  };
-
-  const calculateExpandedDimensions = useCallback(() => {
-    if (!startPosition) return null;
-    
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const padding = Math.min(50, Math.max(30, viewportWidth * 0.05));
-    
-    const maxWidth = viewportWidth - (padding * 2);
-    const maxHeight = viewportHeight - (padding * 2);
-    
-    let targetWidth, targetHeight;
-    
-    if (naturalDimensions && naturalDimensions.width > 0 && naturalDimensions.height > 0) {
-      const imageRatio = naturalDimensions.width / naturalDimensions.height;
-      const fillFactor = 0.85;
-      
-      if (imageRatio > maxWidth / maxHeight) {
-        targetWidth = maxWidth * fillFactor;
-        targetHeight = targetWidth / imageRatio;
-      } else {
-        targetHeight = maxHeight * fillFactor;
-        targetWidth = targetHeight * imageRatio;
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
       }
-    } else {
-      const defaultRatio = startPosition.width / startPosition.height;
-      targetWidth = maxWidth * 0.85;
-      targetHeight = targetWidth / defaultRatio;
-      
-      if (targetHeight > maxHeight) {
-        targetHeight = maxHeight * 0.85;
-        targetWidth = targetHeight * defaultRatio;
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
       }
-    }
-    
-    const centerX = viewportWidth / 2 - targetWidth / 2;
-    const centerY = viewportHeight / 2 - targetHeight / 2;
-    
-    return {
-      width: targetWidth,
-      height: targetHeight,
-      x: centerX,
-      y: centerY
     };
-  }, [startPosition, naturalDimensions]);
-
-  if (!selectedImage || !startPosition) return null;
-
+  }, []);
+  
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedImage) {
+        handleClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [selectedImage, handleClose]);
+  
+  if (!selectedImage || !startPosition) {
+    return null;
+  }
+  
   const expandedDimensions = calculateExpandedDimensions();
-
+  // Show loading if we're still loading high-res and we're open
+  const showLoading = isOpen && !isClosing && highResStatus === 'loading';
+  
   return (
     <div
-      className={`fixed inset-0 z-50 ${isAnimating ? 'bg-black/90' : 'bg-transparent'} transition-all duration-300 ease-out`}
+      className={`fixed inset-0 z-50 transition-colors duration-300 ${
+        isOpen && !isClosing ? 'bg-black/90' : 'bg-transparent'
+      }`}
       onClick={handleClose}
-      style={{ 
-        pointerEvents: isAnimating ? 'auto' : 'none',
-        visibility: isAnimating ? 'visible' : 'hidden'
+      style={{
+        pointerEvents: isClosingRef.current ? 'none' : 'auto',
       }}
     >
+      {/* Close button */}
       <button
-        className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 z-[60] ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute top-4 right-4 z-[60] text-white hover:text-gray-300 transition-opacity duration-300 ${
+          isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
+        }`}
         onClick={handleClose}
-        style={{ pointerEvents: 'auto' }}
+        aria-label="Close"
+        style={{
+          pointerEvents: isClosingRef.current ? 'none' : 'auto',
+        }}
       >
         <XMarkIcon className="w-8 h-8" />
       </button>
       
       {/* Loading indicator */}
-      {isAnimating && !imageLoaded && showLoadingBar && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-40 opacity-80">
-          <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
-      )}
-      
-      {/* Progress Bar */}
-      {isAnimating && showLoadingBar && (
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-48 md:w-64 z-50">
-          <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg">
-            <div className="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[rgb(255,138,128)] to-white rounded-full transition-all duration-200 ease-out"
-                style={{ width: `${loadingProgress}%` }}
-              ></div>
-            </div>
-            <div className="text-center text-white/80 text-xs mt-2 font-medium">
-              {loadingProgress < 100 
-                ? `Loading image... ${Math.round(loadingProgress)}%` 
-                : 'Rendering image...'}
+      {showLoading && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[70] pointer-events-none">
+          <div className="flex flex-col items-center gap-4 bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4">
+            <svg className="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <div className="text-white text-sm font-medium">
+              {!mediumResLoaded 
+                ? 'Loading...' 
+                : loadingProgress > 0 
+                  ? `${Math.round(loadingProgress)}%` 
+                  : 'Enhancing quality...'}
             </div>
           </div>
         </div>
       )}
       
+      {/* Image container */}
       <div
-        className={`fixed will-change-transform ${springAnimation ? 'transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]' : 'transition-all duration-600 ease-out'}`}
+        className="fixed"
+        onClick={(e) => e.stopPropagation()}
         style={{
-          width: isAnimating ? expandedDimensions?.width : startPosition.width,
-          height: isAnimating ? expandedDimensions?.height : startPosition.height,
-          transform: isAnimating
-            ? `translate3d(${expandedDimensions?.x}px, ${expandedDimensions?.y}px, 0) ${springAnimation ? 'scale(1.02)' : 'scale(1)'}`
-            : `translate3d(${startPosition.x}px, ${startPosition.y}px, 0)`,
-          transformOrigin: 'center',
-          boxShadow: isAnimating ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
+          width: isOpen && expandedDimensions ? expandedDimensions.width : startPosition.width,
+          height: isOpen && expandedDimensions ? expandedDimensions.height : startPosition.height,
+          left: isOpen && expandedDimensions ? expandedDimensions.x : startPosition.x,
+          top: isOpen && expandedDimensions ? expandedDimensions.y : startPosition.y,
+          borderRadius: isOpen && expandedDimensions ? '1.5rem' : '0.75rem',
           overflow: 'hidden',
-          borderRadius: '0.75rem',
+          boxShadow: isOpen ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
+          zIndex: 55,
+          willChange: 'transform',
           backgroundColor: 'rgba(0,0,0,0.2)',
-          zIndex: isAnimating ? 55 : 1,
-          transition: isAnimating ? undefined : 'all 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease-out, transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
-        <div className="absolute inset-0 rounded-xl overflow-hidden">
-          <div className="relative w-full h-full">
-            {/* Thumbnail background */}
-            <div
-              className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-              style={{
-                backgroundImage: `url(${thumbnailUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                opacity: showHighRes && imageLoaded ? 0 : 0.9,
-                filter: 'blur(0px)',
-                transform: 'scale(1.01)',
-              }}
-            />
-            
-            {/* High-res image */}
-            {(showHighRes || imageLoaded) && (
-              <div
-                className={`absolute inset-0 rounded-xl overflow-hidden ${springAnimation ? 'transition-opacity duration-700 ease-in-out' : 'transition-opacity duration-200 ease-out'}`}
-                style={{
-                  opacity: showHighRes && imageLoaded ? 1 : 0,
-                  backgroundColor: 'rgba(0,0,0,0.15)',
-                }}
-              >
-                {showHighRes && (
-                  <img
-                    src={getImageUrl(selectedImage.image.uuid, 1500)}
-                    alt="Full resolution preview"
-                    className="w-full h-full object-contain"
-                    onLoad={handleHighResImageLoad}
-                    loading="eager"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Thumbnail preview (from gallery - instant) */}
+        {thumbnailUrl && (
+          <img
+            src={thumbnailUrl}
+            alt="Preview"
+            className="absolute inset-0 w-full h-full object-cover"
+            draggable={false}
+            style={{
+              imageRendering: 'auto',
+              visibility: 'visible',
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+        
+        {/* Medium-res (1000px - loads fast, good quality) */}
+        <img
+          key={`medium-${selectedImage.image.uuid}-${openNonce}`}
+          src={getImageUrl(selectedImage.image.uuid, 1000)}
+          alt="Medium quality"
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+          onLoad={handleMediumLoaded}
+          style={{
+            visibility: 'visible',
+            zIndex: mediumResLoaded ? 2 : 0,
+            pointerEvents: 'none',
+          }}
+        />
+        
+        {/* High-res (2000px - best quality) */}
+        <img
+          key={`high-${selectedImage.image.uuid}-${openNonce}`}
+          src={getImageUrl(selectedImage.image.uuid, 2000)}
+          alt="Full size image"
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+          onLoad={handleHighLoaded}
+          onError={handleHighError}
+          style={{
+            visibility: 'visible',
+            zIndex: highResStatus === 'loaded' ? 3 : 0,
+            pointerEvents: 'none',
+            // Avoid showing a broken-image icon if high-res fails
+            display: highResStatus === 'failed' ? 'none' : 'block',
+          }}
+        />
       </div>
     </div>
   );

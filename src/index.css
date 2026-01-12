@@ -196,7 +196,7 @@ h4, h5, h6 {
 .carousel-container {
   position: relative;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   padding: 0;
   max-width: 100%;
   margin: 0 auto;
@@ -213,10 +213,6 @@ h4, h5, h6 {
   flex: 0 0 auto;
   aspect-ratio: 1/1;
   position: relative;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.192);
-  border: 1px solid rgba(255, 138, 128, 0.1);
   cursor: pointer;
 }
 
@@ -350,4 +346,58 @@ h4, h5, h6 {
 .info-card:hover {
   border-color: rgba(255, 138, 128, 0.3);
   transform: scale(1.05);
+}
+
+/* Gallery Masonry/Waterfall Layout */
+.gallery-masonry {
+  --gallery-gap: 0.5rem;
+  column-count: 3;
+  column-gap: var(--gallery-gap);
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.gallery-item-wrapper {
+  break-inside: avoid;
+  display: inline-block;
+  width: 100%;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+  margin-bottom: var(--gallery-gap);
+  padding: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.gallery-item {
+  width: 100%;
+  display: block;
+  position: relative;
+  z-index: inherit;
+  will-change: transform;
+}
+
+@media (min-width: 640px) {
+  .gallery-masonry {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 768px) {
+  .gallery-masonry {
+    column-count: 4;
+  }
+}
+
+@media (min-width: 1024px) {
+  .gallery-masonry {
+    column-count: 5;
+  }
+}
+
+@media (min-width: 1280px) {
+  .gallery-masonry {
+    column-count: 6;
+  }
 } 

@@ -84,6 +84,125 @@ interface ProfileProps {
   };
 }
 
+// Gallery Item Component with z-index management
+interface GalleryItemProps {
+  photo: ProfileImage;
+  index: number;
+  isLoaded: boolean;
+  optimalSize: number;
+  displayName: string;
+  getModifiedImageUrl: (uuid: string, width?: number) => string;
+  onImageClick: (photo: ProfileImage, index: number, e: React.MouseEvent, rotation: number) => void;
+  isLifted: boolean;
+  isDropping: boolean;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+}
+
+const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
+  photo,
+  index,
+  isLoaded,
+  optimalSize,
+  displayName,
+  getModifiedImageUrl,
+  onImageClick,
+  isLifted,
+  isDropping,
+  hoveredId,
+  setHoveredId,
+}) => {
+  const isHovered = hoveredId === photo.id;
+
+  // Generate a new random rotation on every hover
+  const [rotation, setRotation] = useState(0);
+  const [innerRotation, setInnerRotation] = useState(0);
+
+  const handleMouseEnter = useCallback(() => {
+    setHoveredId(photo.id);
+    // Generate random rotation: 5-10° or -5 to -10°
+    const randomRange = Math.random() * 5; // 0 to 5
+    const baseRotation = 5 + randomRange; // 5 to 10
+    const direction = Math.random() < 0.5 ? 1 : -1; // Random direction
+    const newRotation = baseRotation * direction;
+    setRotation(newRotation);
+    
+    // Delayed inner rotation (smoother, smaller)
+    setTimeout(() => {
+      const innerRandomRange = Math.random() * 3; // 0 to 3
+      const innerBaseRotation = 3 + innerRandomRange; // 3 to 6
+      const innerDirection = Math.random() < 0.5 ? 1 : -1;
+      setInnerRotation(innerBaseRotation * innerDirection);
+    }, 150);
+  }, [photo.id, setHoveredId]);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredId(null);
+    setInnerRotation(0);
+    // Delay rotation reset to match scale transition
+    setTimeout(() => setRotation(0), 300);
+  }, [setHoveredId]);
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    onImageClick(photo, index, e, rotation);
+  }, [photo, index, onImageClick, rotation]);
+
+  return (
+    <div
+      className="gallery-item-wrapper"
+      style={{
+        zIndex: isHovered ? 30 : 1,
+        opacity: isLifted ? 0 : 1,
+        pointerEvents: isLifted ? 'none' : undefined,
+        transition: 'opacity 150ms ease-out',
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className={`gallery-item rounded-xl cursor-pointer relative ${
+          isLoaded ? 'thumbnail-loaded' : ''
+        }`}
+        onClick={handleClick}
+        style={{ 
+          overflow: 'visible',
+          transform: isHovered 
+            ? `scale(1.15) rotate(${rotation}deg)` 
+            : isDropping 
+              ? `scale(0.95) rotate(0deg)` 
+              : 'scale(1) rotate(0deg)',
+          transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
+        data-photo-id={photo.id}
+      >
+        <div 
+          className="rounded-xl overflow-hidden"
+          style={{
+            boxShadow: isHovered 
+              ? '0 0 0 6px #1A1A1A' 
+              : '0 0 0 1px rgba(255, 138, 128, 0.1)',
+            transition: 'box-shadow 300ms ease-out',
+          }}
+        >
+          <img
+            src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
+            alt={`${displayName}'s photo ${index + 1}`}
+            className="w-full h-auto object-cover"
+            loading="lazy"
+            style={{ 
+              display: 'block',
+              transform: isHovered ? `scale(1.15) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
+              transition: 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+GalleryItem.displayName = 'GalleryItem';
+
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const isVip = profile.roles.includes('supporter_vip');
   const publicSocialAccounts = profile.socialAccounts.filter(
@@ -92,6 +211,41 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const publicImages = profile.images.filter(
     (img) => img.accessPermission === 'public' && !img.isAd
   );
+
+  // Gallery hover state - tracks which item is currently hovered
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  
+  // Consolidated timeout refs for easier management
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Handle hover state changes with delayed unhover
+  const handleSetHoveredId = useCallback((id: string | null) => {
+    // Clear existing hover timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+
+    if (id !== null) {
+      // Set hover immediately
+      setHoveredId(id);
+    } else {
+      // Delay unhover to allow transition to complete (matches 300ms transform transition)
+      hoverTimeoutRef.current = setTimeout(() => {
+        setHoveredId(null);
+        hoverTimeoutRef.current = null;
+      }, 300);
+    }
+  }, []);
+
+  // Cleanup all timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Modal state
   const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
@@ -102,14 +256,10 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     height: number;
   } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const thumbnailUrl = useRef<string>('');
-  
-  // Image cache tracking
-  const loadedImages = useRef<{
-    [key: string]: { src: string; width: number; height: number; isFullRes: boolean };
-  }>({});
-  const fullResLoadedImages = useRef<Set<string>>(new Set());
-  const [galleryKey] = useState(0);
+  const [initialRotation, setInitialRotation] = useState(0);
+  const [liftedImageId, setLiftedImageId] = useState<string | null>(null);
+  const [modalOpenNonce, setModalOpenNonce] = useState(0);
+  const [droppingImageId, setDroppingImageId] = useState<string | null>(null);
 
   // Get visible items for responsive sizing
   const getVisibleItems = (width: number) => {
@@ -152,40 +302,40 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   // Preload gallery images
   useEffect(() => {
     publicImages.forEach((photo) => {
-      const optimalSize = getGalleryImageSize();
-      const url = getModifiedImageUrl(photo.image.uuid, optimalSize);
-      
       const img = new Image();
-      img.onload = () => {
-        loadedImages.current[photo.image.uuid] = {
-          src: url,
-          width: img.naturalWidth,
-          height: img.naturalHeight,
-          isFullRes: img.naturalWidth >= 1200 || optimalSize >= 1200,
-        };
-        
-        if (img.naturalWidth >= 1200 || optimalSize >= 1200) {
-          fullResLoadedImages.current.add(photo.image.uuid);
-        }
-      };
-      img.src = url;
+      img.src = getModifiedImageUrl(photo.image.uuid, getGalleryImageSize());
     });
   }, [publicImages, getModifiedImageUrl, getGalleryImageSize]);
+
+  // Track thumbnail URL for instant preview
+  const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
   // Handle image click from carousel or gallery
   const handleImageClick = (
     image: ProfileImage,
     _index: number,
-    element: HTMLDivElement | null
+    element: HTMLDivElement | null,
+    rotation: number = 0
   ) => {
     if (!element) return;
 
-    const rect = element.getBoundingClientRect();
+    // Clear hover state immediately
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredId(null);
+
+    // Get the clicked image's actual src (already loaded in browser)
     const imgElement = element.querySelector('img');
     const currentSrc = imgElement?.currentSrc || imgElement?.src || '';
-    
-    thumbnailUrl.current = currentSrc || getModifiedImageUrl(image.image.uuid, getGalleryImageSize());
+    setThumbnailUrl(currentSrc);
 
+    // Store the rotation for modal
+    setInitialRotation(rotation);
+
+    // Get the clicked image position immediately
+    const rect = element.getBoundingClientRect();
     setStartPosition({
       x: rect.left,
       y: rect.top,
@@ -194,31 +344,35 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     });
     setSelectedImage(image);
     setIsModalOpen(true);
+    // Force the modal to re-run its loading pipeline even if the same image is clicked repeatedly
+    setModalOpenNonce((n) => n + 1);
   };
 
   // Handle gallery image click
-  const handleGalleryImageClick = (photo: ProfileImage, index: number, e: React.MouseEvent) => {
+  const handleGalleryImageClick = (photo: ProfileImage, index: number, e: React.MouseEvent, rotation: number) => {
+    e.stopPropagation();
+    // Visually "lift" the clicked tile out of the gallery while the modal animates
+    setLiftedImageId(photo.id);
     const element = e.currentTarget as HTMLDivElement;
-    handleImageClick(photo, index, element);
+    handleImageClick(photo, index, element, rotation);
   };
 
   // Handle modal close
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
+    // Trigger drop-down effect on gallery item
+    if (selectedImage) {
+      setDroppingImageId(selectedImage.id);
+      setTimeout(() => setDroppingImageId(null), 300);
+    }
+    
     setSelectedImage(null);
     setStartPosition(null);
     setIsModalOpen(false);
-  };
+    setLiftedImageId(null);
+    setInitialRotation(0);
+    setThumbnailUrl('');
+  }, [selectedImage]);
 
-  // Handle full-res image loaded callback
-  const handleFullResLoaded = (uuid: string, width: number, height: number) => {
-    loadedImages.current[uuid] = {
-      src: getModifiedImageUrl(uuid, 1500),
-      width,
-      height,
-      isFullRes: true,
-    };
-    fullResLoadedImages.current.add(uuid);
-  };
 
   return (
     <div className="min-h-screen bg-secondary text-white">
@@ -248,7 +402,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
               displayName={profile.displayName}
               onImageClick={handleImageClick}
               getImageUrl={getModifiedImageUrl}
-              fullResLoadedImages={fullResLoadedImages.current}
+              fullResLoadedImages={new Set()}
             />
 
             {/* Main Content */}
@@ -265,30 +419,26 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                 </div>
 
                 {/* Right Column - Photo Grid */}
-                <div className="lg:col-span-9">
-                  <div
-                    key={galleryKey}
-                    className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 gallery-grid"
-                  >
+                <div className="lg:col-span-9 overflow-visible">
+                  <div className="gallery-masonry">
                     {publicImages.map((photo, index) => {
                       const optimalSize = getGalleryImageSize();
-                      const isLoaded = fullResLoadedImages.current.has(photo.image.uuid);
 
                       return (
-                        <div
+                        <GalleryItem
                           key={photo.id}
-                          className={`aspect-square rounded-xl overflow-hidden cursor-pointer transform hover:scale-105 transition duration-300 ring-1 ring-[rgb(255,138,128)]/10 hover:ring-[rgb(255,138,128)]/30 ${
-                            isLoaded ? 'thumbnail-loaded' : ''
-                          }`}
-                          onClick={(e) => handleGalleryImageClick(photo, index, e)}
-                        >
-                          <img
-                            src={getModifiedImageUrl(photo.image.uuid, optimalSize)}
-                            alt={`${profile.displayName}'s photo ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                            loading="lazy"
-                          />
-                        </div>
+                          photo={photo}
+                          index={index}
+                          isLoaded={true}
+                          optimalSize={optimalSize}
+                          displayName={profile.displayName}
+                          getModifiedImageUrl={getModifiedImageUrl}
+                          onImageClick={handleGalleryImageClick}
+                          isLifted={liftedImageId === photo.id && selectedImage?.id === photo.id}
+                          isDropping={droppingImageId === photo.id}
+                          hoveredId={hoveredId}
+                          setHoveredId={handleSetHoveredId}
+                        />
                       );
                     })}
                   </div>
@@ -303,13 +453,11 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
       <ImageModal
         selectedImage={selectedImage}
         startPosition={startPosition}
-        thumbnailUrl={thumbnailUrl.current}
+        thumbnailUrl={thumbnailUrl}
+        initialRotation={initialRotation}
+        openNonce={modalOpenNonce}
         getImageUrl={getModifiedImageUrl}
         onClose={handleCloseModal}
-        onFullResLoaded={handleFullResLoaded}
-        isFullResAlreadyLoaded={
-          selectedImage ? fullResLoadedImages.current.has(selectedImage.image.uuid) : false
-        }
       />
     </div>
   );

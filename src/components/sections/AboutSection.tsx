@@ -66,7 +66,7 @@ const AboutSection: React.FC<AboutSectionProps> = ({ items, languages }) => {
               <LanguageIcon className="w-4 h-4 text-[rgb(255,138,128)]" />
             </div>
             <div className="flex flex-wrap gap-1">
-              {languages.map((lang, index) => (
+              {languages.map((lang) => (
                 <span
                   key={lang.id}
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[rgb(255,138,128)]/10 text-[rgb(255,138,128)] text-xs font-medium rounded"

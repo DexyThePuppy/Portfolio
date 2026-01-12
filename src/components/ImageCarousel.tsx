@@ -32,6 +32,9 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const imageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [itemWidth, setItemWidth] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [rotations, setRotations] = useState<{ [key: number]: number }>({});
+  const [innerRotations, setInnerRotations] = useState<{ [key: number]: number }>({});
 
   // Shuffle array helper
   const shuffleArray = useCallback((array: ProfileImage[]) => {
@@ -132,8 +135,33 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
     onImageClick(image, index, element);
   };
 
+  const handleMouseEnter = useCallback((index: number) => {
+    setHoveredIndex(index);
+    // Generate random rotation: 5-10° or -5 to -10°
+    const randomRange = Math.random() * 5; // 0 to 5
+    const baseRotation = 5 + randomRange; // 5 to 10
+    const direction = Math.random() < 0.5 ? 1 : -1; // Random direction
+    const newRotation = baseRotation * direction;
+    setRotations(prev => ({ ...prev, [index]: newRotation }));
+    
+    // Delayed inner rotation (smoother, smaller)
+    setTimeout(() => {
+      const innerRandomRange = Math.random() * 3; // 0 to 3
+      const innerBaseRotation = 3 + innerRandomRange; // 3 to 6
+      const innerDirection = Math.random() < 0.5 ? 1 : -1;
+      setInnerRotations(prev => ({ ...prev, [index]: innerBaseRotation * innerDirection }));
+    }, 150);
+  }, []);
+
+  const handleMouseLeave = useCallback((index: number) => {
+    setHoveredIndex(null);
+    setInnerRotations(prev => ({ ...prev, [index]: 0 }));
+    // Delay rotation reset to match scale transition
+    setTimeout(() => setRotations(prev => ({ ...prev, [index]: 0 })), 300);
+  }, []);
+
   return (
-    <div className="carousel-container relative z-20" ref={carouselContainerRef}>
+    <div className="carousel-container relative z-20" ref={carouselContainerRef} style={{ overflow: 'visible' }}>
       <button 
         onClick={handlePrev}
         className="carousel-button prev z-30"
@@ -152,31 +180,57 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
           transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
           width: 'max-content',
           paddingLeft: '0.25rem',
-          paddingRight: '0.25rem'
+          paddingRight: '0.25rem',
+          transition: 'transform 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'visible'
         }}
       >
         {extendedImages.map((image, index) => {
           const isLoaded = fullResLoadedImages.has(image.image.uuid);
+          const isHovered = hoveredIndex === index;
+          const rotation = rotations[index] || 0;
+          const innerRotation = innerRotations[index] || 0;
           
           return (
             <div
               key={`${image.id}-${index}`}
-              className={`carousel-item relative z-20 cursor-pointer overflow-hidden ${isLoaded ? 'thumbnail-loaded' : ''}`}
+              className={`carousel-item relative cursor-pointer ${isLoaded ? 'thumbnail-loaded' : ''}`}
               onClick={() => handleImageClickInternal(image, index)}
               ref={el => imageRefs.current[`image-${index}`] = el}
+              onMouseEnter={() => handleMouseEnter(index)}
+              onMouseLeave={() => handleMouseLeave(index)}
               style={{
                 width: `${itemWidth}px`,
                 height: `${itemWidth}px`,
-                flexBasis: `${itemWidth}px`
+                flexBasis: `${itemWidth}px`,
+                zIndex: isHovered ? 30 : 20,
+                overflow: 'visible',
+                transform: isHovered ? `scale(1.15) rotate(${rotation}deg)` : 'scale(1) rotate(0deg)',
+                transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             >
-              <img
-                src={getImageUrl(image.image.uuid)}
-                alt={`${displayName}'s photo ${index + 1}`}
-                loading="lazy"
-                draggable="false"
-                className="w-full h-full object-cover pointer-events-auto transition-transform duration-300 hover:scale-110"
-              />
+              <div 
+                className="rounded-xl overflow-hidden w-full h-full"
+                style={{
+                  boxShadow: isHovered 
+                    ? '0 0 0 6px #1A1A1A' 
+                    : '0 0 0 1px rgba(255, 138, 128, 0.1)',
+                  transition: 'box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                <img
+                  src={getImageUrl(image.image.uuid)}
+                  alt={`${displayName}'s photo ${index + 1}`}
+                  loading="lazy"
+                  draggable="false"
+                  className="w-full h-full object-cover pointer-events-auto"
+                  style={{
+                    display: 'block',
+                    transform: isHovered ? `scale(1.15) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
+                    transition: 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+                  }}
+                />
+              </div>
             </div>
           );
         })}
