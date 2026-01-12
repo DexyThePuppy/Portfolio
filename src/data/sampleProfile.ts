@@ -148,9 +148,45 @@ export const sampleProfile: Profile = {
     },
     {
       id: "7667000005",
-      socialNetwork: "vrchat",
+      socialNetwork: "bluesky",
       isVerified: false,
-      url: "https://vrchat.com/home/user/usr_DexyThePuppy",
+      url: "https://bsky.app/profile/dexy.dog",
+      displayName: "dexy.dog",
+      value: "@dexy.dog",
+      accessPermission: "public"
+    },
+    {
+      id: "7667000006",
+      socialNetwork: "lastfm",
+      isVerified: false,
+      url: "https://www.last.fm/user/DexyThePuppy",
+      displayName: "DexyThePuppy",
+      value: "DexyThePuppy",
+      accessPermission: "public"
+    },
+    {
+      id: "7667000007",
+      socialNetwork: "reddit",
+      isVerified: false,
+      url: "https://www.reddit.com/user/2002MK/",
+      displayName: "2002MK",
+      value: "u/2002MK",
+      accessPermission: "public"
+    },
+    {
+      id: "7667000008",
+      socialNetwork: "barq",
+      isVerified: false,
+      url: "https://barq.app/@dexy",
+      displayName: "dexy",
+      value: "@dexy",
+      accessPermission: "public"
+    },
+    {
+      id: "7667000009",
+      socialNetwork: "github",
+      isVerified: false,
+      url: "https://github.com/DexyThePuppy",
       displayName: "DexyThePuppy",
       value: "DexyThePuppy",
       accessPermission: "public"

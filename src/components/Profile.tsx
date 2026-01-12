@@ -2,30 +2,31 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // Components
 import Banner from './Banner';
-import ImageCarousel from './ImageCarousel';
 import ImageModal from './ImageModal';
-import { InfoBadge } from './UIComponents';
 import {
-  AboutSection,
   StatsSection,
   HobbiesSection,
-  TechSetupSection,
-  PlatformsSection,
-  SocialLinksSection,
 } from './sections';
+import type { Language, TechItem, PlatformItem } from '../data/profileData';
 
 // Icons
 import { 
   MapPinIcon, 
-  UserIcon, 
-  StarIcon,
-  HeartIcon,
   CakeIcon,
+  SparklesIcon,
+  UserGroupIcon,
+  PhotoIcon,
+  CpuChipIcon,
+  GlobeAltIcon,
+  Square3Stack3DIcon,
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { getSocialIcon, getSocialColors, getSocialDisplayName, getSocialCustomIcon } from '../utils/socialNetworks';
+import { getIconStyles, getBackgroundStyles, GRAIN_TEXTURE_URL } from '../utils/visualUtils';
 
 // Data
 import {
-  mainInfo,
   statsInfo,
   hobbies,
   languages,
@@ -43,6 +44,17 @@ import { ANIMATION_TIMINGS, Z_INDEX, GALLERY } from '../constants';
 interface ProfileProps {
   profile: ProfileType;
 }
+
+// Generate a consistent "random" number from a string (0-1 range)
+const seededRandom = (seed: string): number => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs((Math.sin(hash) * 10000) % 1);
+};
 
 // Gallery Item Component with z-index management
 interface GalleryItemProps {
@@ -80,17 +92,17 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
 
   const handleMouseEnter = useCallback(() => {
     setHoveredId(photo.id);
-    // Generate random rotation: 5-10° or -5 to -10°
-    const randomRange = Math.random() * 5;
-    const baseRotation = 5 + randomRange;
+    // Generate random rotation: 2-4° or -2 to -4°
+    const randomRange = Math.random() * 2;
+    const baseRotation = 2 + randomRange;
     const direction = Math.random() < 0.5 ? 1 : -1;
     const newRotation = baseRotation * direction;
     setRotation(newRotation);
     
     // Delayed inner rotation (smoother, smaller)
     setTimeout(() => {
-      const innerRandomRange = Math.random() * 3;
-      const innerBaseRotation = 3 + innerRandomRange;
+      const innerRandomRange = Math.random() * 1.5;
+      const innerBaseRotation = 1.5 + innerRandomRange;
       const innerDirection = Math.random() < 0.5 ? 1 : -1;
       setInnerRotation(innerBaseRotation * innerDirection);
     }, ANIMATION_TIMINGS.INNER_ROTATION_DELAY);
@@ -164,64 +176,93 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
 GalleryItem.displayName = 'GalleryItem';
 
 // ============================================================================
-// PROFILE HEADER COMPONENT
+// PROFILE HEADER COMPONENT - Bento Grid Style
 // ============================================================================
 
 interface ProfileHeaderProps {
   displayName: string;
   profileImageUrl: string;
-  isVip: boolean;
   location: {
     region: string;
     country: string;
   };
   age: number;
+  species: string;
+  relationshipStatus: string;
+  personality: string;
+  languages: Language[];
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
   displayName,
   profileImageUrl,
-  isVip,
   location,
   age,
+  species,
+  relationshipStatus,
+  personality,
+  languages: langs,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 mb-8">
-      <div className="relative -mt-28 sm:-mt-32 lg:-mt-36">
-        <img
-          src={profileImageUrl}
-          alt={displayName}
-          className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl lg:rounded-3xl object-cover border-4 border-[rgb(255,138,128)] shadow-xl"
-        />
-        {isVip && (
-          <div className="absolute -top-2 -right-2 bg-[rgb(255,138,128)] text-white p-1 rounded-full">
-            <StarIcon className="w-5 h-5" />
+    <div className="mb-6">
+      {/* Compact Header Layout */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        
+        {/* Profile Image */}
+        <div className="relative group flex-shrink-0 mx-auto sm:mx-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgb(255,138,128)] to-pink-600 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300" />
+          <img
+            src={profileImageUrl}
+            alt={displayName}
+            className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border-2 border-[rgb(255,138,128)]/40 group-hover:border-[rgb(255,138,128)]/70 transition-all duration-300 group-hover:scale-[1.02]"
+          />
+        </div>
+
+        {/* Info Section */}
+        <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
+          {/* Name & Location */}
+          <div className="mb-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">{displayName}</h1>
+            <p className="text-white/60 text-sm flex items-center gap-1.5 justify-center sm:justify-start">
+              <MapPinIcon className="w-4 h-4" />
+              {location.region}, {location.country}
+            </p>
           </div>
-        )}
-      </div>
-      <div className="flex-1 pb-4 text-center sm:text-left">
-        <h1 className="text-3xl lg:text-5xl font-bold mb-2 mt-4 sm:mt-0 text-white">{displayName}</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-gray-200 max-w-5xl">
-          <InfoBadge 
-            icon={MapPinIcon}
-            text={`${location.region}, ${location.country}`}
-            id="location"
-          />
-          <InfoBadge 
-            icon={CakeIcon}
-            text={`${age} years old`}
-            id="age"
-          />
-          <InfoBadge 
-            icon={UserIcon}
-            text="He/Him"
-            id="gender"
-          />
-          <InfoBadge 
-            icon={HeartIcon}
-            text="Gay"
-            id="orientation"
-          />
+
+          {/* Info Pills - Row 1 */}
+          <div className="flex flex-wrap gap-2 justify-center sm:justify-start mb-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[rgb(255,138,128)]/15 border border-[rgb(255,138,128)]/20 rounded-lg text-xs text-white">
+              <SparklesIcon className="w-3.5 h-3.5 text-[rgb(255,138,128)]" />
+              {species}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/15 border border-blue-500/20 rounded-lg text-xs text-white">
+              <CakeIcon className="w-3.5 h-3.5 text-blue-400" />
+              {age} years
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-pink-500/15 border border-pink-500/20 rounded-lg text-xs text-white">
+              <HeartIconSolid className="w-3.5 h-3.5 text-pink-400" />
+              {relationshipStatus}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/15 border border-purple-500/20 rounded-lg text-xs text-white">
+              <UserGroupIcon className="w-3.5 h-3.5 text-purple-400" />
+              {personality}
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/20 rounded-lg text-xs text-white">
+              🏳️‍🌈 Gay
+            </span>
+          </div>
+
+          {/* Languages Row */}
+          <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+            {langs.map((lang) => (
+              <span
+                key={lang.id}
+                className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/5 text-white/80 text-xs rounded-md border border-white/10 hover:bg-white/10 transition-colors"
+              >
+                {lang.flag} {lang.name}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -231,11 +272,474 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
 ProfileHeader.displayName = 'ProfileHeader';
 
 // ============================================================================
+// TAB TYPES & COMPONENTS
+// ============================================================================
+
+type TabType = 'gallery' | 'tech' | 'socials' | 'platforms';
+
+interface TabButtonProps {
+  id: TabType;
+  label: string;
+  icon: React.ElementType;
+  isActive: boolean;
+  onClick: (tab: TabType) => void;
+}
+
+const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, onClick }) => (
+  <button
+    onClick={() => onClick(id)}
+    className={`
+      flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300
+      ${isActive 
+        ? 'bg-[rgb(255,138,128)]/20 text-[rgb(255,138,128)] border border-[rgb(255,138,128)]/30' 
+        : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+      }
+    `}
+  >
+    <Icon className="w-4 h-4" />
+    <span className="hidden sm:inline">{label}</span>
+  </button>
+);
+
+// ============================================================================
+// GRID CARD COMPONENTS (with rotation/scale effects)
+// ============================================================================
+
+interface GridCardProps {
+  children: React.ReactNode;
+  isHovered: boolean;
+  rotation: number;
+}
+
+const GridCard: React.FC<GridCardProps> = ({ children, isHovered, rotation }) => (
+  <div
+    className="relative cursor-pointer"
+    style={{
+      zIndex: isHovered ? Z_INDEX.GALLERY_HOVERED : Z_INDEX.BASE,
+      transform: isHovered ? `scale(${GALLERY.HOVER_SCALE}) rotate(${rotation}deg)` : 'scale(1) rotate(0deg)',
+      transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+    }}
+  >
+    {children}
+  </div>
+);
+
+// Tech Card for Grid
+interface TechGridCardProps {
+  item: TechItem;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+}
+
+const TechGridCard: React.FC<TechGridCardProps> = React.memo(({ item, hoveredId, setHoveredId }) => {
+  const [rotation, setRotation] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isHovered = hoveredId === `tech-${item.id}`;
+  
+  // Consistent "random" values based on item ID
+  const initialIconRotation = (seededRandom(`${item.id}-rotation`) - 0.5) * 16;
+  // Subtle padding variation (16-48px) - enough for effect without wasting space
+  const randomPadding = 16 + seededRandom(`${item.id}-padding`) * 32;
+
+  // Measure card width and update on resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (cardRef.current) {
+        setCardWidth(cardRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Calculate rotation based on card width (longer cards = less rotation)
+  // Assume cards range from ~120px to ~400px, scale rotation from 4° to 1°
+  const getRotationForWidth = (width: number): number => {
+    if (width === 0) return 2; // Default while measuring
+    const minWidth = 120;
+    const maxWidth = 400;
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, width));
+    const normalized = (clampedWidth - minWidth) / (maxWidth - minWidth);
+    const maxRotation = 4;
+    const minRotation = 1;
+    return minRotation + (1 - normalized) * (maxRotation - minRotation);
+  };
+
+  const handleMouseEnter = useCallback(() => {
+    setHoveredId(`tech-${item.id}`);
+    const baseRotation = getRotationForWidth(cardWidth);
+    const randomRange = Math.random() * 1;
+    const direction = Math.random() < 0.5 ? 1 : -1;
+    setRotation((baseRotation + randomRange) * direction);
+  }, [item.id, setHoveredId, cardWidth]);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredId(null);
+    setTimeout(() => setRotation(0), ANIMATION_TIMINGS.HOVER_DELAY);
+  }, [setHoveredId]);
+
+  return (
+    <div 
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter} 
+      onMouseLeave={handleMouseLeave} 
+      className="flex-grow min-w-fit"
+    >
+      <GridCard isHovered={isHovered} rotation={rotation}>
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`
+            flex relative rounded-xl overflow-hidden w-full
+            bg-gradient-to-br ${item.color || 'from-gray-500/20 to-gray-600/20'}
+            border border-[rgb(255,138,128)]/10
+            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+          `}
+          style={getIconStyles(item.id, item.name)}
+        >
+          {/* Blurred background */}
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              backgroundImage: `url(${item.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px) saturate(1.2)',
+              ...getBackgroundStyles(item.id, item.name),
+            }}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+          <div 
+            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: GRAIN_TEXTURE_URL }}
+          />
+          
+          {/* Content - Horizontal layout */}
+          <div 
+            className="relative flex items-center gap-3 py-3 pl-4"
+            style={{ paddingRight: randomPadding }}
+          >
+            <img 
+              src={item.image} 
+              alt={item.name}
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-lg flex-shrink-0"
+              style={{
+                transform: isHovered 
+                  ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
+                  : `scale(1) rotate(${initialIconRotation}deg)`,
+                transition: 'transform 400ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+              }}
+            />
+            <div className="flex-shrink-0">
+              <span className="text-[8px] uppercase tracking-wider text-[rgb(255,138,128)] font-medium block">
+                {item.category}
+              </span>
+              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{item.name}</h4>
+              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{item.spec}</p>
+            </div>
+          </div>
+        </a>
+      </GridCard>
+    </div>
+  );
+});
+
+TechGridCard.displayName = 'TechGridCard';
+
+// Platform Card for Grid
+interface PlatformGridCardProps {
+  platform: PlatformItem;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+}
+
+const PlatformGridCard: React.FC<PlatformGridCardProps> = React.memo(({ platform, hoveredId, setHoveredId }) => {
+  const [rotation, setRotation] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isHovered = hoveredId === `platform-${platform.id}`;
+  
+  // Consistent "random" values based on platform ID
+  const initialIconRotation = (seededRandom(`${platform.id}-rotation`) - 0.5) * 16;
+  // Subtle padding variation (16-48px) - enough for effect without wasting space
+  const randomPadding = 16 + seededRandom(`${platform.id}-padding`) * 32;
+
+  // Measure card width and update on resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (cardRef.current) {
+        setCardWidth(cardRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Calculate rotation based on card width (longer cards = less rotation)
+  // Assume cards range from ~120px to ~400px, scale rotation from 4° to 1°
+  const getRotationForWidth = (width: number): number => {
+    if (width === 0) return 2; // Default while measuring
+    const minWidth = 120;
+    const maxWidth = 400;
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, width));
+    const normalized = (clampedWidth - minWidth) / (maxWidth - minWidth);
+    const maxRotation = 4;
+    const minRotation = 1;
+    return minRotation + (1 - normalized) * (maxRotation - minRotation);
+  };
+
+  const handleMouseEnter = useCallback(() => {
+    setHoveredId(`platform-${platform.id}`);
+    const baseRotation = getRotationForWidth(cardWidth);
+    const randomRange = Math.random() * 1;
+    const direction = Math.random() < 0.5 ? 1 : -1;
+    setRotation((baseRotation + randomRange) * direction);
+  }, [platform.id, setHoveredId, cardWidth]);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredId(null);
+    setTimeout(() => setRotation(0), ANIMATION_TIMINGS.HOVER_DELAY);
+  }, [setHoveredId]);
+
+  return (
+    <div 
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter} 
+      onMouseLeave={handleMouseLeave} 
+      className="flex-grow min-w-fit"
+    >
+      <GridCard isHovered={isHovered} rotation={rotation}>
+        <a
+          href={platform.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`
+            flex relative rounded-xl overflow-hidden w-full
+            bg-gradient-to-br ${platform.color || 'from-gray-500/20 to-gray-600/20'}
+            border border-[rgb(255,138,128)]/10
+            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+          `}
+          style={getIconStyles(platform.id, platform.name)}
+        >
+          {/* Blurred background */}
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              backgroundImage: `url(${platform.image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px) saturate(1.2)',
+              ...getBackgroundStyles(platform.id, platform.name),
+            }}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+          <div 
+            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: GRAIN_TEXTURE_URL }}
+          />
+          
+          {/* Content - Horizontal layout */}
+          <div 
+            className="relative flex items-center gap-3 py-3 pl-4"
+            style={{ paddingRight: randomPadding }}
+          >
+            <img 
+              src={platform.image} 
+              alt={platform.name}
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-lg flex-shrink-0"
+              style={{
+                transform: isHovered 
+                  ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
+                  : `scale(1) rotate(${initialIconRotation}deg)`,
+                transition: 'transform 400ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+              }}
+            />
+            <div className="flex-shrink-0">
+              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{platform.name}</h4>
+              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{platform.description}</p>
+            </div>
+          </div>
+        </a>
+      </GridCard>
+    </div>
+  );
+});
+
+PlatformGridCard.displayName = 'PlatformGridCard';
+
+// Social Card for Grid
+interface SocialAccount {
+  id: string;
+  socialNetwork: string;
+  isVerified: boolean;
+  url: string;
+  displayName: string;
+  value: string;
+  accessPermission: string;
+}
+
+interface SocialGridCardProps {
+  account: SocialAccount;
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+}
+
+const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hoveredId, setHoveredId }) => {
+  const [rotation, setRotation] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isHovered = hoveredId === `social-${account.id}`;
+  const icon = getSocialIcon(account.socialNetwork);
+  const customIcon = getSocialCustomIcon(account.socialNetwork);
+  const colors = getSocialColors(account.socialNetwork);
+  
+  // Consistent "random" values based on account ID
+  const initialIconRotation = (seededRandom(`${account.id}-rotation`) - 0.5) * 16;
+  // Subtle padding variation (16-48px) - enough for effect without wasting space
+  const randomPadding = 16 + seededRandom(`${account.id}-padding`) * 32;
+
+  // Measure card width and update on resize
+  useEffect(() => {
+    const updateWidth = () => {
+      if (cardRef.current) {
+        setCardWidth(cardRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  // Calculate rotation based on card width (longer cards = less rotation)
+  // Assume cards range from ~120px to ~400px, scale rotation from 4° to 1°
+  const getRotationForWidth = (width: number): number => {
+    if (width === 0) return 2; // Default while measuring
+    const minWidth = 120;
+    const maxWidth = 400;
+    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, width));
+    const normalized = (clampedWidth - minWidth) / (maxWidth - minWidth);
+    const maxRotation = 4;
+    const minRotation = 1;
+    return minRotation + (1 - normalized) * (maxRotation - minRotation);
+  };
+
+  const handleMouseEnter = useCallback(() => {
+    setHoveredId(`social-${account.id}`);
+    const baseRotation = getRotationForWidth(cardWidth);
+    const randomRange = Math.random() * 1;
+    const direction = Math.random() < 0.5 ? 1 : -1;
+    setRotation((baseRotation + randomRange) * direction);
+  }, [account.id, setHoveredId, cardWidth]);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredId(null);
+    setTimeout(() => setRotation(0), ANIMATION_TIMINGS.HOVER_DELAY);
+  }, [setHoveredId]);
+
+  return (
+    <div 
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter} 
+      onMouseLeave={handleMouseLeave} 
+      className="flex-grow min-w-fit"
+    >
+      <GridCard isHovered={isHovered} rotation={rotation}>
+        <a
+          href={account.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`
+            flex relative rounded-xl overflow-hidden w-full
+            bg-gradient-to-br ${colors.gradient}
+            border border-[rgb(255,138,128)]/10
+            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+          `}
+          style={getIconStyles(account.id, account.socialNetwork)}
+        >
+          {/* Blurred icon background */}
+          <div 
+            className="absolute inset-0 opacity-30 flex items-center justify-center"
+            style={{
+              filter: 'blur(12px) saturate(1.5)',
+              ...getBackgroundStyles(account.id, account.socialNetwork),
+            }}
+          >
+            {icon && (
+              <FontAwesomeIcon 
+                icon={icon} 
+                className="w-32 h-32"
+                style={{ color: colors.glow }}
+              />
+            )}
+          </div>
+          <div className="absolute inset-0 bg-black/50" />
+          <div 
+            className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: GRAIN_TEXTURE_URL }}
+          />
+          
+          {/* Content - Horizontal layout */}
+          <div 
+            className="relative flex items-center gap-3 py-3 pl-4"
+            style={{ paddingRight: randomPadding }}
+          >
+            {customIcon ? (
+              <img 
+                src={customIcon}
+                alt={getSocialDisplayName(account.socialNetwork)}
+                className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg flex-shrink-0 object-contain"
+                style={{
+                  transform: isHovered 
+                    ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
+                    : `scale(1) rotate(${initialIconRotation}deg)`,
+                  transition: 'transform 400ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+                }}
+              />
+            ) : icon ? (
+              <FontAwesomeIcon 
+                icon={icon} 
+                className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg flex-shrink-0" 
+                style={{ 
+                  color: colors.glow,
+                  transform: isHovered 
+                    ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
+                    : `scale(1) rotate(${initialIconRotation}deg)`,
+                  transition: 'transform 400ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+                }} 
+              />
+            ) : (
+              <GlobeAltIcon 
+                className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg text-white flex-shrink-0" 
+                style={{
+                  transform: isHovered 
+                    ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
+                    : `scale(1) rotate(${initialIconRotation}deg)`,
+                  transition: 'transform 400ms cubic-bezier(0.25, 1.2, 0.5, 1)',
+                }}
+              />
+            )}
+            <div className="flex-shrink-0">
+              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{getSocialDisplayName(account.socialNetwork)}</h4>
+              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{account.value}</p>
+            </div>
+          </div>
+        </a>
+      </GridCard>
+    </div>
+  );
+});
+
+SocialGridCard.displayName = 'SocialGridCard';
+
+// ============================================================================
 // MAIN PROFILE COMPONENT
 // ============================================================================
 
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
-  const isVip = profile.roles.includes('supporter_vip');
   const publicSocialAccounts = profile.socialAccounts.filter(
     (account: any) => account.accessPermission === 'public'
   );
@@ -243,7 +747,10 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     (img: any) => img.accessPermission === 'public' && !img.isAd
   );
 
-  // Gallery hover state - tracks which item is currently hovered
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabType>('gallery');
+
+  // Hover state - tracks which item is currently hovered (works for all tabs)
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   
   // Consolidated timeout refs for easier management
@@ -303,7 +810,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   // Track thumbnail URL for instant preview
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
-  // Handle image click from carousel or gallery
+  // Handle image click from gallery
   const handleImageClick = (
     image: ProfileImage,
     _index: number,
@@ -374,66 +881,112 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
       {/* Scrollable Content Area */}
       <div className="relative z-10">
         {/* Empty space to push content below the banner */}
-        <div className="h-[30vh]" />
+        <div className="h-[25vh]" />
 
         {/* Main Content with dark background */}
-        <div className="bg-secondary min-h-[35vh] rounded-t-3xl shadow-lg pt-10 border-t border-[rgb(255,138,128)]/10 backdrop-blur-sm">
+        <div className="bg-secondary min-h-[35vh] rounded-t-3xl shadow-lg pt-8 border-t border-[rgb(255,138,128)]/10 backdrop-blur-sm">
           <div className="container mx-auto px-4">
             <ProfileHeader
               displayName={profile.displayName}
               profileImageUrl={getModifiedImageUrl(profile.profileImage.image.uuid)}
-              isVip={isVip}
               location={{
                 region: profile.location.place.region,
                 country: profile.location.place.country,
               }}
               age={profile.age}
-            />
-
-            <ImageCarousel
-              images={publicImages}
-              displayName={profile.displayName}
-              onImageClick={handleImageClick}
-              getImageUrl={getModifiedImageUrl}
-              fullResLoadedImages={new Set()}
+              species="Shep × Bernese × Dragon"
+              relationshipStatus="Single and looking"
+              personality="Ambivert"
+              languages={languages}
             />
 
             {/* Main Content */}
-            <div className="mt-8">
-              <div className="grid lg:grid-cols-12 gap-8">
+            <div className="mt-6">
+              <div className="grid lg:grid-cols-12 gap-6">
                 {/* Left Column - Info Sections */}
-                <div className="lg:col-span-3">
-                  <AboutSection items={mainInfo} languages={languages} />
+                <div className="lg:col-span-3 order-2 lg:order-1">
                   <StatsSection categories={statsInfo} />
                   <HobbiesSection items={hobbies} />
-                  <TechSetupSection items={techSetup} />
-                  <PlatformsSection items={platforms} />
-                  <SocialLinksSection accounts={publicSocialAccounts} />
                 </div>
 
-                {/* Right Column - Photo Grid */}
-                <div className="lg:col-span-9 overflow-visible">
-                  <div className="gallery-masonry">
-                    {publicImages.map((photo: any, index: number) => {
-                      const optimalSize = getGalleryImageSize();
+                {/* Right Column - Tabbed Content */}
+                <div className="lg:col-span-9 order-1 lg:order-2 overflow-visible">
+                  {/* Tab Navigation */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <TabButton id="gallery" label="Gallery" icon={PhotoIcon} isActive={activeTab === 'gallery'} onClick={setActiveTab} />
+                    <TabButton id="tech" label="Hardware" icon={CpuChipIcon} isActive={activeTab === 'tech'} onClick={setActiveTab} />
+                    <TabButton id="socials" label="Socials" icon={GlobeAltIcon} isActive={activeTab === 'socials'} onClick={setActiveTab} />
+                    <TabButton id="platforms" label="Platforms" icon={Square3Stack3DIcon} isActive={activeTab === 'platforms'} onClick={setActiveTab} />
+                  </div>
 
-                      return (
-                        <GalleryItem
-                          key={photo.id}
-                          photo={photo}
-                          index={index}
-                          isLoaded={true}
-                          optimalSize={optimalSize}
-                          displayName={profile.displayName}
-                          getModifiedImageUrl={getModifiedImageUrl}
-                          onImageClick={handleGalleryImageClick}
-                          isLifted={liftedImageId === photo.id && selectedImage?.id === photo.id}
-                          isDropping={droppingImageId === photo.id}
-                          hoveredId={hoveredId}
-                          setHoveredId={handleSetHoveredId}
-                        />
-                      );
-                    })}
+                  {/* Tab Content */}
+                  <div>
+                    {/* Gallery Tab */}
+                    {activeTab === 'gallery' && (
+                      <div className="gallery-masonry">
+                        {publicImages.map((photo: any, index: number) => {
+                          const optimalSize = getGalleryImageSize();
+                          return (
+                            <GalleryItem
+                              key={photo.id}
+                              photo={photo}
+                              index={index}
+                              isLoaded={true}
+                              optimalSize={optimalSize}
+                              displayName={profile.displayName}
+                              getModifiedImageUrl={getModifiedImageUrl}
+                              onImageClick={handleGalleryImageClick}
+                              isLifted={liftedImageId === photo.id && selectedImage?.id === photo.id}
+                              isDropping={droppingImageId === photo.id}
+                              hoveredId={hoveredId}
+                              setHoveredId={handleSetHoveredId}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Hardware Tab */}
+                    {activeTab === 'tech' && (
+                      <div className="flex flex-wrap gap-3">
+                        {techSetup.map((item) => (
+                          <TechGridCard
+                            key={item.id}
+                            item={item}
+                            hoveredId={hoveredId}
+                            setHoveredId={handleSetHoveredId}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Socials Tab */}
+                    {activeTab === 'socials' && (
+                      <div className="flex flex-wrap gap-3">
+                        {publicSocialAccounts.map((account: any) => (
+                          <SocialGridCard
+                            key={account.id}
+                            account={account}
+                            hoveredId={hoveredId}
+                            setHoveredId={handleSetHoveredId}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Platforms Tab */}
+                    {activeTab === 'platforms' && (
+                      <div className="flex flex-wrap gap-3">
+                        {platforms.map((platform) => (
+                          <PlatformGridCard
+                            key={platform.id}
+                            platform={platform}
+                            hoveredId={hoveredId}
+                            setHoveredId={handleSetHoveredId}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

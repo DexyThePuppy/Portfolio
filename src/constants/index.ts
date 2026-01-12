@@ -7,8 +7,6 @@ export const ANIMATION_TIMINGS = {
   HOVER_DELAY: 300,
   ROTATION_RESET: 200,
   MODAL_CLOSE: 300,
-  CAROUSEL_AUTO_ADVANCE: 5000,
-  CAROUSEL_TRANSITION: 500,
   SCALE_DROP: 100,
   INNER_ROTATION_DELAY: 150,
 } as const;
@@ -35,12 +33,6 @@ export const GALLERY = {
   HOVER_SCALE: 1.15,
   DROP_SCALE: 0.95,
   INNER_HOVER_SCALE: 1.15,
-} as const;
-
-// Carousel settings
-export const CAROUSEL = {
-  MULTIPLIER: 5, // Number of times to repeat images for infinite scroll
-  MIN_THRESHOLD: 5, // Minimum index before reshuffle
 } as const;
 
 // Modal padding

@@ -1,68 +1,10 @@
 import React from 'react';
-import { InfoItem, StatCategory, Language, TechItem, PlatformItem } from '../data/profileData';
-import { LanguageIcon } from '@heroicons/react/24/outline';
+import { InfoItem, StatCategory, TechItem, PlatformItem } from '../data/profileData';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CheckBadgeIcon, GlobeAltIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { getIconStyles, getBackgroundStyles, GRAIN_TEXTURE_URL } from '../utils/visualUtils';
 import { getSocialIcon, getSocialColors, getSocialDisplayName } from '../utils/socialNetworks';
 import { CardSection, renderTechCard, renderPlatformCard } from './Cards';
-
-// ============================================================================
-// ABOUT SECTION
-// ============================================================================
-
-interface AboutSectionProps {
-  items: InfoItem[];
-  languages?: Language[];
-}
-
-export const AboutSection: React.FC<AboutSectionProps> = React.memo(({ items, languages }) => {
-  return (
-    <div className="section-card">
-      <h2 className="section-title">About</h2>
-      <div className="grid grid-cols-1 gap-0.5">
-        {items.map((info) => (
-          <div
-            key={info.id}
-            className="flex items-center gap-2.5 p-2 bg-black/15 backdrop-blur-sm rounded-md border border-[rgb(255,138,128)]/5 hover:border-[rgb(255,138,128)]/20 transition-all duration-300 group"
-          >
-            <div
-              className="flex-shrink-0 w-4 h-4 flex items-center justify-center tech-icon-rotate"
-              style={getIconStyles(info.id, info.title)}
-            >
-              <info.icon className="w-4 h-4 text-[rgb(255,138,128)]" />
-            </div>
-            <span className="section-text text-xs font-medium">{info.title}</span>
-          </div>
-        ))}
-
-        {/* Languages as compact inline badges */}
-        {languages && languages.length > 0 && (
-          <div className="flex items-center gap-2.5 p-2 bg-black/15 backdrop-blur-sm rounded-md border border-[rgb(255,138,128)]/5 hover:border-[rgb(255,138,128)]/20 transition-all duration-300 group">
-            <div
-              className="flex-shrink-0 w-4 h-4 flex items-center justify-center tech-icon-rotate"
-              style={getIconStyles('languages', 'Languages')}
-            >
-              <LanguageIcon className="w-4 h-4 text-[rgb(255,138,128)]" />
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {languages.map((lang) => (
-                <span
-                  key={lang.id}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[rgb(255,138,128)]/10 text-[rgb(255,138,128)] text-xs font-medium rounded"
-                >
-                  {lang.flag} {lang.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-});
-
-AboutSection.displayName = 'AboutSection';
 
 // ============================================================================
 // STATS SECTION

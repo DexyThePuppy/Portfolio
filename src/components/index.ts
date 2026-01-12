@@ -4,7 +4,6 @@
  */
 
 export { default as Banner } from './Banner';
-export { default as ImageCarousel } from './ImageCarousel';
 export { default as ImageModal } from './ImageModal';
 export { default as Profile } from './Profile';
 
