@@ -268,24 +268,6 @@ h4, h5, h6 {
   }
 }
 
-@media (max-width: 1024px) {
-  .carousel-container {
-    margin: 0 -0.25rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .carousel-container {
-    margin: 0 -0.25rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .carousel-container {
-    margin: 0 -0.25rem;
-  }
-}
-
 /* Tech card icon rotation on hover */
 .tech-icon-rotate {
   transform: rotate(var(--icon-rotation, 0deg));
@@ -296,9 +278,8 @@ h4, h5, h6 {
   transform: rotate(var(--icon-hover-rotation, 0deg)) scale(1.1);
 }
 
-/* Additional icon scaling for profile header, about, stats, and hobbies */
-.info-card:hover .tech-icon-rotate,
-.group:hover .tech-icon-rotate {
+/* Icon scaling for info cards */
+.info-card:hover .tech-icon-rotate {
   transform: rotate(var(--icon-hover-rotation, 0deg)) scale(1.2);
 }
 

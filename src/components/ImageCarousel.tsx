@@ -1,17 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-
-interface ProfileImage {
-  id: string;
-  image: {
-    uuid: string;
-    contentRating: string;
-    width: number;
-    height: number;
-    blurHash: string;
-  };
-  accessPermission: string;
-  isAd: boolean;
-}
+import type { ProfileImage } from '../types';
+import { getVisibleItems } from '../utils/imageUtils';
+import { ANIMATION_TIMINGS, CAROUSEL, Z_INDEX, GALLERY } from '../constants';
 
 interface ImageCarouselProps {
   images: ProfileImage[];
@@ -48,9 +38,8 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
   // Create extended images for infinite scroll
   const createExtendedImages = useCallback(() => {
-    const multiplier = 5;
     const extended: ProfileImage[] = [];
-    for (let i = 0; i < multiplier; i++) {
+    for (let i = 0; i < CAROUSEL.MULTIPLIER; i++) {
       extended.push(...shuffleArray(images));
     }
     return extended;
@@ -59,15 +48,6 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const [extendedImages, setExtendedImages] = useState(createExtendedImages);
   const [currentIndex, setCurrentIndex] = useState(Math.floor(images.length * 2));
 
-  // Calculate visible items based on screen width
-  const getVisibleItems = (width: number) => {
-    if (width <= 640) return 3;
-    if (width <= 768) return 4;
-    if (width <= 1024) return 5;
-    if (width <= 1280) return 6;
-    return 7;
-  };
-
   const visibleItems = getVisibleItems(window.innerWidth);
 
   // Calculate item width
@@ -75,9 +55,8 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
     if (!carouselContainerRef.current) return;
     const containerWidth = carouselContainerRef.current.clientWidth;
     const visible = getVisibleItems(window.innerWidth);
-    const gap = 8;
     const totalGaps = visible - 1;
-    const availableWidth = containerWidth - (totalGaps * gap);
+    const availableWidth = containerWidth - (totalGaps * GALLERY.GAP);
     const calculatedItemWidth = Math.floor(availableWidth / visible);
     setItemWidth(calculatedItemWidth);
   }, []);
@@ -93,7 +72,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
     if (isAnimating) return;
     setIsAnimating(true);
     
-    if (currentIndex >= extendedImages.length - visibleItems - 5) {
+    if (currentIndex >= extendedImages.length - visibleItems - CAROUSEL.MIN_THRESHOLD) {
       const newImages = createExtendedImages();
       setExtendedImages(newImages);
       setCurrentIndex(Math.floor(images.length * 2));
@@ -101,14 +80,14 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       setCurrentIndex(prev => prev + 1);
     }
     
-    setTimeout(() => setIsAnimating(false), 500);
+    setTimeout(() => setIsAnimating(false), ANIMATION_TIMINGS.CAROUSEL_TRANSITION);
   }, [isAnimating, currentIndex, extendedImages.length, visibleItems, createExtendedImages, images.length]);
 
   const handlePrev = useCallback(() => {
     if (isAnimating) return;
     setIsAnimating(true);
     
-    if (currentIndex <= 5) {
+    if (currentIndex <= CAROUSEL.MIN_THRESHOLD) {
       const newImages = createExtendedImages();
       setExtendedImages(newImages);
       setCurrentIndex(Math.floor(images.length * 2));
@@ -116,7 +95,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       setCurrentIndex(prev => prev - 1);
     }
     
-    setTimeout(() => setIsAnimating(false), 500);
+    setTimeout(() => setIsAnimating(false), ANIMATION_TIMINGS.CAROUSEL_TRANSITION);
   }, [isAnimating, currentIndex, createExtendedImages, images.length]);
 
   // Auto-advance carousel
@@ -125,7 +104,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       if (!isAnimating) {
         handleNext();
       }
-    }, 5000);
+    }, ANIMATION_TIMINGS.CAROUSEL_AUTO_ADVANCE);
     return () => clearInterval(interval);
   }, [currentIndex, isAnimating, handleNext]);
 
@@ -138,26 +117,26 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const handleMouseEnter = useCallback((index: number) => {
     setHoveredIndex(index);
     // Generate random rotation: 5-10° or -5 to -10°
-    const randomRange = Math.random() * 5; // 0 to 5
-    const baseRotation = 5 + randomRange; // 5 to 10
-    const direction = Math.random() < 0.5 ? 1 : -1; // Random direction
+    const randomRange = Math.random() * 5;
+    const baseRotation = 5 + randomRange;
+    const direction = Math.random() < 0.5 ? 1 : -1;
     const newRotation = baseRotation * direction;
     setRotations(prev => ({ ...prev, [index]: newRotation }));
     
     // Delayed inner rotation (smoother, smaller)
     setTimeout(() => {
-      const innerRandomRange = Math.random() * 3; // 0 to 3
-      const innerBaseRotation = 3 + innerRandomRange; // 3 to 6
+      const innerRandomRange = Math.random() * 3;
+      const innerBaseRotation = 3 + innerRandomRange;
       const innerDirection = Math.random() < 0.5 ? 1 : -1;
       setInnerRotations(prev => ({ ...prev, [index]: innerBaseRotation * innerDirection }));
-    }, 150);
+    }, ANIMATION_TIMINGS.INNER_ROTATION_DELAY);
   }, []);
 
   const handleMouseLeave = useCallback((index: number) => {
     setHoveredIndex(null);
     setInnerRotations(prev => ({ ...prev, [index]: 0 }));
     // Delay rotation reset to match scale transition
-    setTimeout(() => setRotations(prev => ({ ...prev, [index]: 0 })), 300);
+    setTimeout(() => setRotations(prev => ({ ...prev, [index]: 0 })), ANIMATION_TIMINGS.HOVER_DELAY);
   }, []);
 
   return (
@@ -177,7 +156,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       <div 
         className="carousel-track"
         style={{ 
-          transform: `translateX(-${currentIndex * (itemWidth + 8)}px)`,
+          transform: `translateX(-${currentIndex * (itemWidth + GALLERY.GAP)}px)`,
           width: 'max-content',
           paddingLeft: '0.25rem',
           paddingRight: '0.25rem',
@@ -203,9 +182,9 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
                 width: `${itemWidth}px`,
                 height: `${itemWidth}px`,
                 flexBasis: `${itemWidth}px`,
-                zIndex: isHovered ? 30 : 20,
+                zIndex: isHovered ? Z_INDEX.GALLERY_HOVERED : 20,
                 overflow: 'visible',
-                transform: isHovered ? `scale(1.15) rotate(${rotation}deg)` : 'scale(1) rotate(0deg)',
+                transform: isHovered ? `scale(${GALLERY.HOVER_SCALE}) rotate(${rotation}deg)` : 'scale(1) rotate(0deg)',
                 transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
             >
@@ -226,7 +205,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
                   className="w-full h-full object-cover pointer-events-auto"
                   style={{
                     display: 'block',
-                    transform: isHovered ? `scale(1.15) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
+                    transform: isHovered ? `scale(${GALLERY.INNER_HOVER_SCALE}) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
                     transition: 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)',
                   }}
                 />

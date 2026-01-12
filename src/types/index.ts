@@ -95,6 +95,26 @@ export interface Language {
   flag: string;
 }
 
+// Tech and Platform Types (used in profileData.ts)
+export interface TechItem {
+  id: string;
+  category: string;
+  name: string;
+  spec: string;
+  image: string;
+  url: string;
+  color?: string;
+}
+
+export interface PlatformItem {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  url: string;
+  color?: string;
+}
+
 // Modal Position Type
 export interface StartPosition {
   x: number;

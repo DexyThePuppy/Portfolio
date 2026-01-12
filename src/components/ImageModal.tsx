@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { ProfileImage } from '../types/index';
+import { Z_INDEX, IMAGE_SIZES, MODAL_PADDING, ANIMATION_TIMINGS, GALLERY } from '../constants';
 
 interface ImagePosition {
   x: number;
@@ -56,9 +57,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
   const calculateExpandedDimensions = useCallback(() => {
     if (!imageDimensions) return null;
     
-    const padding = 80;
-    const maxWidth = window.innerWidth - padding * 2;
-    const maxHeight = window.innerHeight - padding * 2;
+    const maxWidth = window.innerWidth - MODAL_PADDING * 2;
+    const maxHeight = window.innerHeight - MODAL_PADDING * 2;
     
     const imageAspect = imageDimensions.width / imageDimensions.height;
     const screenAspect = maxWidth / maxHeight;
@@ -121,8 +121,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
     setRotation(initialRotation);
     
     // Drop-in effect: scale down then bounce back
-    setScale(0.95);
-    setTimeout(() => setScale(1), 100);
+    setScale(GALLERY.DROP_SCALE);
+    setTimeout(() => setScale(1), ANIMATION_TIMINGS.SCALE_DROP);
 
     // Start progress simulation shortly after open (real load completion comes from <img onLoad>)
     progressStartTimeoutRef.current = setTimeout(() => {
@@ -177,7 +177,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
     }
     rotationResetTimeoutRef.current = setTimeout(() => {
       setRotation(0);
-    }, 200);
+    }, ANIMATION_TIMINGS.ROTATION_RESET);
   }, []);
 
   const handleHighError = useCallback(() => {
@@ -219,7 +219,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
     // Start close animation with scale-down effect
     setIsClosing(true);
     setIsOpen(false);
-    setScale(0.95); // Scale down when closing
+    setScale(GALLERY.DROP_SCALE); // Scale down when closing
     
     // Clear any existing timeout
     if (closeTimeoutRef.current) {
@@ -232,7 +232,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
       setIsClosing(false);
       onClose();
       closeTimeoutRef.current = null;
-    }, 300);
+    }, ANIMATION_TIMINGS.MODAL_CLOSE);
   }, [onClose]);
   
   // Cleanup on unmount
@@ -269,23 +269,25 @@ const ImageModal: React.FC<ImageModalProps> = ({
   
   return (
     <div
-      className={`fixed inset-0 z-50 transition-colors duration-300 ${
+      className={`fixed inset-0 transition-colors duration-300 ${
         isOpen && !isClosing ? 'bg-black/90' : 'bg-transparent'
       }`}
       onClick={handleClose}
       style={{
         pointerEvents: isClosingRef.current ? 'none' : 'auto',
+        zIndex: Z_INDEX.MODAL_BACKDROP,
       }}
     >
       {/* Close button */}
       <button
-        className={`absolute top-4 right-4 z-[60] text-white hover:text-gray-300 transition-opacity duration-300 ${
+        className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 ${
           isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
         aria-label="Close"
         style={{
           pointerEvents: isClosingRef.current ? 'none' : 'auto',
+          zIndex: Z_INDEX.MODAL_CLOSE,
         }}
       >
         <XMarkIcon className="w-8 h-8" />
@@ -293,7 +295,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
       
       {/* Loading indicator */}
       {showLoading && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[70] pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ zIndex: Z_INDEX.MODAL_LOADING }}
+        >
           <div className="flex flex-col items-center gap-4 bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4">
             <svg className="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -322,7 +326,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
           borderRadius: isOpen && expandedDimensions ? '1.5rem' : '0.75rem',
           overflow: 'hidden',
           boxShadow: isOpen ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
-          zIndex: 55,
+          zIndex: Z_INDEX.MODAL_CONTENT,
           willChange: 'transform',
           backgroundColor: 'rgba(0,0,0,0.2)',
           transform: `rotate(${rotation}deg) scale(${scale})`,
@@ -345,10 +349,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
           />
         )}
         
-        {/* Medium-res (1000px - loads fast, good quality) */}
+        {/* Medium-res - loads fast, good quality */}
         <img
           key={`medium-${selectedImage.image.uuid}-${openNonce}`}
-          src={getImageUrl(selectedImage.image.uuid, 1000)}
+          src={getImageUrl(selectedImage.image.uuid, IMAGE_SIZES.MEDIUM)}
           alt="Medium quality"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}
@@ -360,10 +364,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
           }}
         />
         
-        {/* High-res (2000px - best quality) */}
+        {/* High-res - best quality */}
         <img
           key={`high-${selectedImage.image.uuid}-${openNonce}`}
-          src={getImageUrl(selectedImage.image.uuid, 2000)}
+          src={getImageUrl(selectedImage.image.uuid, IMAGE_SIZES.HIGH)}
           alt="Full size image"
           className="absolute inset-0 w-full h-full object-cover"
           draggable={false}

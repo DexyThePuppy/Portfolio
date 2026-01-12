@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 // Components
 import Banner from './Banner';
-import ProfileHeader from './ProfileHeader';
 import ImageCarousel from './ImageCarousel';
 import ImageModal from './ImageModal';
+import { InfoBadge } from './UIComponents';
 import {
   AboutSection,
   StatsSection,
@@ -13,6 +13,15 @@ import {
   PlatformsSection,
   SocialLinksSection,
 } from './sections';
+
+// Icons
+import { 
+  MapPinIcon, 
+  UserIcon, 
+  StarIcon,
+  HeartIcon,
+  CakeIcon,
+} from '@heroicons/react/24/outline';
 
 // Data
 import {
@@ -25,63 +34,14 @@ import {
 } from '../data/profileData';
 
 // Types
-interface UploadedImage {
-  uuid: string;
-  contentRating: string;
-  width: number;
-  height: number;
-  blurHash: string;
-}
+import type { ProfileImage, Profile as ProfileType } from '../types/index';
 
-interface ProfileImage {
-  id: string;
-  image: UploadedImage;
-  accessPermission: string;
-  isAd: boolean;
-}
-
-interface Place {
-  region: string;
-  country: string;
-  countryCode: string;
-}
-
-interface ProfileLocation {
-  type: string;
-  homePlace: Place;
-  place: Place;
-}
-
-interface SocialAccount {
-  id: string;
-  socialNetwork: string;
-  isVerified: boolean;
-  url: string;
-  displayName: string;
-  value: string;
-  accessPermission: string;
-}
+// Utils
+import { getModifiedImageUrl, getGalleryImageSize } from '../utils/imageUtils';
+import { ANIMATION_TIMINGS, Z_INDEX, GALLERY } from '../constants';
 
 interface ProfileProps {
-  profile: {
-    id: string;
-    uuid: string;
-    displayName: string;
-    username: string;
-    roles: string[];
-    age: number;
-    dateOfBirth: string;
-    profileImage: ProfileImage;
-    location: ProfileLocation;
-    images: ProfileImage[];
-    bio: {
-      biography: string;
-      genders: string[];
-      languages: string[];
-      relationshipStatus: string;
-    };
-    socialAccounts: SocialAccount[];
-  };
+  profile: ProfileType;
 }
 
 // Gallery Item Component with z-index management
@@ -121,26 +81,26 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
   const handleMouseEnter = useCallback(() => {
     setHoveredId(photo.id);
     // Generate random rotation: 5-10° or -5 to -10°
-    const randomRange = Math.random() * 5; // 0 to 5
-    const baseRotation = 5 + randomRange; // 5 to 10
-    const direction = Math.random() < 0.5 ? 1 : -1; // Random direction
+    const randomRange = Math.random() * 5;
+    const baseRotation = 5 + randomRange;
+    const direction = Math.random() < 0.5 ? 1 : -1;
     const newRotation = baseRotation * direction;
     setRotation(newRotation);
     
     // Delayed inner rotation (smoother, smaller)
     setTimeout(() => {
-      const innerRandomRange = Math.random() * 3; // 0 to 3
-      const innerBaseRotation = 3 + innerRandomRange; // 3 to 6
+      const innerRandomRange = Math.random() * 3;
+      const innerBaseRotation = 3 + innerRandomRange;
       const innerDirection = Math.random() < 0.5 ? 1 : -1;
       setInnerRotation(innerBaseRotation * innerDirection);
-    }, 150);
+    }, ANIMATION_TIMINGS.INNER_ROTATION_DELAY);
   }, [photo.id, setHoveredId]);
 
   const handleMouseLeave = useCallback(() => {
     setHoveredId(null);
     setInnerRotation(0);
     // Delay rotation reset to match scale transition
-    setTimeout(() => setRotation(0), 300);
+    setTimeout(() => setRotation(0), ANIMATION_TIMINGS.HOVER_DELAY);
   }, [setHoveredId]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -151,7 +111,7 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
     <div
       className="gallery-item-wrapper"
       style={{
-        zIndex: isHovered ? 30 : 1,
+        zIndex: isHovered ? Z_INDEX.GALLERY_HOVERED : Z_INDEX.BASE,
         opacity: isLifted ? 0 : 1,
         pointerEvents: isLifted ? 'none' : undefined,
         transition: 'opacity 150ms ease-out',
@@ -167,9 +127,9 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
         style={{ 
           overflow: 'visible',
           transform: isHovered 
-            ? `scale(1.15) rotate(${rotation}deg)` 
+            ? `scale(${GALLERY.HOVER_SCALE}) rotate(${rotation}deg)` 
             : isDropping 
-              ? `scale(0.95) rotate(0deg)` 
+              ? `scale(${GALLERY.DROP_SCALE}) rotate(0deg)` 
               : 'scale(1) rotate(0deg)',
           transition: 'transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
@@ -191,7 +151,7 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
             loading="lazy"
             style={{ 
               display: 'block',
-              transform: isHovered ? `scale(1.15) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
+              transform: isHovered ? `scale(${GALLERY.INNER_HOVER_SCALE}) rotate(${innerRotation}deg)` : 'scale(1) rotate(0deg)',
               transition: 'transform 600ms cubic-bezier(0.25, 1.2, 0.5, 1)',
             }}
           />
@@ -203,13 +163,84 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
 
 GalleryItem.displayName = 'GalleryItem';
 
+// ============================================================================
+// PROFILE HEADER COMPONENT
+// ============================================================================
+
+interface ProfileHeaderProps {
+  displayName: string;
+  profileImageUrl: string;
+  isVip: boolean;
+  location: {
+    region: string;
+    country: string;
+  };
+  age: number;
+}
+
+const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
+  displayName,
+  profileImageUrl,
+  isVip,
+  location,
+  age,
+}) => {
+  return (
+    <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 mb-8">
+      <div className="relative -mt-28 sm:-mt-32 lg:-mt-36">
+        <img
+          src={profileImageUrl}
+          alt={displayName}
+          className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-2xl lg:rounded-3xl object-cover border-4 border-[rgb(255,138,128)] shadow-xl"
+        />
+        {isVip && (
+          <div className="absolute -top-2 -right-2 bg-[rgb(255,138,128)] text-white p-1 rounded-full">
+            <StarIcon className="w-5 h-5" />
+          </div>
+        )}
+      </div>
+      <div className="flex-1 pb-4 text-center sm:text-left">
+        <h1 className="text-3xl lg:text-5xl font-bold mb-2 mt-4 sm:mt-0 text-white">{displayName}</h1>
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-gray-200 max-w-5xl">
+          <InfoBadge 
+            icon={MapPinIcon}
+            text={`${location.region}, ${location.country}`}
+            id="location"
+          />
+          <InfoBadge 
+            icon={CakeIcon}
+            text={`${age} years old`}
+            id="age"
+          />
+          <InfoBadge 
+            icon={UserIcon}
+            text="He/Him"
+            id="gender"
+          />
+          <InfoBadge 
+            icon={HeartIcon}
+            text="Gay"
+            id="orientation"
+          />
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ProfileHeader.displayName = 'ProfileHeader';
+
+// ============================================================================
+// MAIN PROFILE COMPONENT
+// ============================================================================
+
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const isVip = profile.roles.includes('supporter_vip');
   const publicSocialAccounts = profile.socialAccounts.filter(
-    (account) => account.accessPermission === 'public'
+    (account: any) => account.accessPermission === 'public'
   );
   const publicImages = profile.images.filter(
-    (img) => img.accessPermission === 'public' && !img.isAd
+    (img: any) => img.accessPermission === 'public' && !img.isAd
   );
 
   // Gallery hover state - tracks which item is currently hovered
@@ -230,11 +261,11 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
       // Set hover immediately
       setHoveredId(id);
     } else {
-      // Delay unhover to allow transition to complete (matches 300ms transform transition)
+      // Delay unhover to allow transition to complete
       hoverTimeoutRef.current = setTimeout(() => {
         setHoveredId(null);
         hoverTimeoutRef.current = null;
-      }, 300);
+      }, ANIMATION_TIMINGS.HOVER_DELAY);
     }
   }, []);
 
@@ -261,51 +292,13 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const [modalOpenNonce, setModalOpenNonce] = useState(0);
   const [droppingImageId, setDroppingImageId] = useState<string | null>(null);
 
-  // Get visible items for responsive sizing
-  const getVisibleItems = (width: number) => {
-    if (width <= 640) return 3;
-    if (width <= 768) return 4;
-    if (width <= 1024) return 5;
-    if (width <= 1280) return 6;
-    return 7;
-  };
-
-  // Calculate optimal image size
-  const calculateOptimalImageSize = (
-    containerWidth: number,
-    devicePixelRatio = window.devicePixelRatio || 1
-  ): number => {
-    const size = Math.round((containerWidth * devicePixelRatio) / 50) * 50;
-    return Math.max(200, Math.min(800, size));
-  };
-
-  // Get image URL with optional width
-  const getModifiedImageUrl = useCallback((uuid: string, width?: number): string => {
-    const columns = getVisibleItems(window.innerWidth);
-    const containerWidth = window.innerWidth;
-    
-    const calculatedWidth =
-      width ||
-      calculateOptimalImageSize(Math.ceil(containerWidth / columns * 1.2));
-    
-    return `https://assets.barq.app/image/${uuid}.jpeg?width=${calculatedWidth}`;
-  }, []);
-
-  // Get gallery image size
-  const getGalleryImageSize = useCallback((): number => {
-    const dpr = window.devicePixelRatio || 1;
-    const columns = getVisibleItems(window.innerWidth);
-    const baseSize = window.innerWidth / columns;
-    return calculateOptimalImageSize(baseSize, dpr);
-  }, []);
-
   // Preload gallery images
   useEffect(() => {
-    publicImages.forEach((photo) => {
+    publicImages.forEach((photo: any) => {
       const img = new Image();
       img.src = getModifiedImageUrl(photo.image.uuid, getGalleryImageSize());
     });
-  }, [publicImages, getModifiedImageUrl, getGalleryImageSize]);
+  }, [publicImages]);
 
   // Track thumbnail URL for instant preview
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
@@ -362,7 +355,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     // Trigger drop-down effect on gallery item
     if (selectedImage) {
       setDroppingImageId(selectedImage.id);
-      setTimeout(() => setDroppingImageId(null), 300);
+      setTimeout(() => setDroppingImageId(null), ANIMATION_TIMINGS.MODAL_CLOSE);
     }
     
     setSelectedImage(null);
@@ -421,7 +414,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                 {/* Right Column - Photo Grid */}
                 <div className="lg:col-span-9 overflow-visible">
                   <div className="gallery-masonry">
-                    {publicImages.map((photo, index) => {
+                    {publicImages.map((photo: any, index: number) => {
                       const optimalSize = getGalleryImageSize();
 
                       return (
