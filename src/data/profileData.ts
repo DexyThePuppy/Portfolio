@@ -101,8 +101,6 @@ export const hobbies: InfoItem[] = [
 // Languages - Updated from new data
 export const languages: Language[] = [
   { id: '1', name: 'Austrian', flag: '🇦🇹' },
-  { id: '2', name: 'German', flag: '🇩🇪' },
-  { id: '3', name: 'American', flag: '🇺🇸' },
   { id: '4', name: 'Bosnian', flag: '🇧🇦' }
 ];
 

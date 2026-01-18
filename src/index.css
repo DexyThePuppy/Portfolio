@@ -273,6 +273,7 @@ h4, h5, h6 {
   padding: 0;
   position: relative;
   overflow: visible;
+  vertical-align: top; /* Fix WebKit centering items in columns */
 }
 
 .gallery-item {
