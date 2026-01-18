@@ -68,7 +68,6 @@ const Banner: React.FC<BannerProps> = React.memo(({ imageUrl, isModalOpen = fals
             height: `calc(100% + ${BANNER.EXTRA_HEIGHT}px)`,
             width: '100%',
             transform: `translate3d(0, ${BANNER.INITIAL_OFFSET + scrollY * BANNER.PARALLAX_SPEED}px, 0)`,
-            willChange: 'transform',
             transition: 'transform 0.05s cubic-bezier(0.33, 1, 0.68, 1)'
           }}
         />

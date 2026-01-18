@@ -327,7 +327,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
           overflow: 'hidden',
           boxShadow: isOpen ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
           zIndex: Z_INDEX.MODAL_CONTENT,
-          willChange: 'transform',
           backgroundColor: 'rgba(0,0,0,0.2)',
           transform: `rotate(${rotation}deg) scale(${scale})`,
           transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',

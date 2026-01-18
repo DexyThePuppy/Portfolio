@@ -749,6 +749,14 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('gallery');
 
+  // WebKit detection for Safari-specific styling
+  const [isWebKit, setIsWebKit] = useState(false);
+  useEffect(() => {
+    const isWebKitBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
+      /AppleWebKit/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    setIsWebKit(isWebKitBrowser);
+  }, []);
+
   // Hover state - tracks which item is currently hovered (works for all tabs)
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   
@@ -922,7 +930,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                   <div>
                     {/* Gallery Tab */}
                     {activeTab === 'gallery' && (
-                      <div className="gallery-masonry">
+                      <div className={`gallery-masonry${isWebKit ? ' is-webkit' : ''}`}>
                         {publicImages.map((photo: any, index: number) => {
                           const optimalSize = getGalleryImageSize();
                           return (
