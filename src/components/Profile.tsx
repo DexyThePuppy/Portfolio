@@ -843,6 +843,38 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     });
   }, [galleryImages]);
 
+  // Preload tech setup images
+  useEffect(() => {
+    techSetup.forEach((item: any) => {
+      if (item.image) {
+        const img = new Image();
+        img.src = item.image;
+      }
+    });
+  }, []);
+
+  // Preload platform images
+  useEffect(() => {
+    platforms.forEach((platform: any) => {
+      if (platform.image) {
+        const img = new Image();
+        img.src = platform.image;
+      }
+    });
+  }, []);
+
+  // Preload social account icons
+  useEffect(() => {
+    publicSocialAccounts.forEach((account: any) => {
+      const customIcon = getSocialCustomIcon(account.socialNetwork);
+      if (customIcon) {
+        const img = new Image();
+        img.src = customIcon;
+      }
+      // FontAwesome icons don't need pre-caching as they're loaded via CSS
+    });
+  }, [publicSocialAccounts]);
+
   // Track thumbnail URL for instant preview
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
