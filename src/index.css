@@ -256,7 +256,7 @@ h4, h5, h6 {
 /* Gallery Masonry/Waterfall Layout */
 .gallery-masonry {
   --gallery-gap: 0.5rem;
-  column-count: 3;
+  column-count: 4;
   column-gap: var(--gallery-gap);
   width: 100%;
   position: relative;
@@ -285,7 +285,7 @@ h4, h5, h6 {
 
 @media (min-width: 640px) {
   .gallery-masonry {
-    column-count: 3;
+    column-count: 4;
   }
 }
 
@@ -311,7 +311,7 @@ h4, h5, h6 {
 .gallery-masonry.is-webkit {
   column-count: unset;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--gallery-gap);
   overflow: visible;
 }
@@ -349,7 +349,7 @@ h4, h5, h6 {
 
 @media (min-width: 640px) {
   .gallery-masonry.is-webkit {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

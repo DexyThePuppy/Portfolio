@@ -1,13 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 // Components
 import Banner from './Banner';
 import ImageModal from './ImageModal';
+import KinksTable from './KinksTable';
 import {
   StatsSection,
   HobbiesSection,
 } from './sections';
 import type { Language, TechItem, PlatformItem } from '../data/profileData';
+
+// Context
+import { useNSFW } from '../contexts/NSFWContext';
 
 // Icons
 import { 
@@ -19,6 +23,7 @@ import {
   CpuChipIcon,
   GlobeAltIcon,
   Square3Stack3DIcon,
+  FireIcon,
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -274,7 +279,7 @@ ProfileHeader.displayName = 'ProfileHeader';
 // TAB TYPES & COMPONENTS
 // ============================================================================
 
-type TabType = 'gallery' | 'tech' | 'socials' | 'platforms';
+type TabType = 'gallery' | 'kinks' | 'tech' | 'socials' | 'platforms';
 
 interface TabButtonProps {
   id: TabType;
@@ -739,15 +744,38 @@ SocialGridCard.displayName = 'SocialGridCard';
 // ============================================================================
 
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
+  const { nsfwEnabled } = useNSFW();
+  
   const publicSocialAccounts = profile.socialAccounts.filter(
     (account: any) => account.accessPermission === 'public'
   );
-  const publicImages = profile.images.filter(
-    (img: any) => img.accessPermission === 'public' && !img.isAd
-  );
+
+  // Filter images based on NSFW preference
+  const galleryImages = useMemo(() => {
+    const publicImgs = profile.images.filter(
+      (img: any) => img.accessPermission === 'public' && !img.isAd
+    );
+
+    if (nsfwEnabled) {
+      // Show all images (safe + nsfw)
+      return publicImgs;
+    } else {
+      // Only show SFW images
+      return publicImgs.filter(
+        (img: any) => img.image.contentRating === 'safe'
+      );
+    }
+  }, [profile.images, nsfwEnabled]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('gallery');
+
+  // Switch away from kinks tab if NSFW is disabled
+  useEffect(() => {
+    if (!nsfwEnabled && activeTab === 'kinks') {
+      setActiveTab('gallery');
+    }
+  }, [nsfwEnabled, activeTab]);
 
   // WebKit detection for Safari-specific styling
   const [isWebKit, setIsWebKit] = useState(false);
@@ -808,11 +836,11 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
   // Preload gallery images
   useEffect(() => {
-    publicImages.forEach((photo: any) => {
+    galleryImages.forEach((photo: any) => {
       const img = new Image();
       img.src = getModifiedImageUrl(photo.image.uuid, getGalleryImageSize());
     });
-  }, [publicImages]);
+  }, [galleryImages]);
 
   // Track thumbnail URL for instant preview
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
@@ -921,6 +949,9 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                   {/* Tab Navigation */}
                   <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
                     <TabButton id="gallery" label="Gallery" icon={PhotoIcon} isActive={activeTab === 'gallery'} onClick={setActiveTab} />
+                    {nsfwEnabled && (
+                      <TabButton id="kinks" label="Kinks" icon={FireIcon} isActive={activeTab === 'kinks'} onClick={setActiveTab} />
+                    )}
                     <TabButton id="tech" label="Hardware" icon={CpuChipIcon} isActive={activeTab === 'tech'} onClick={setActiveTab} />
                     <TabButton id="socials" label="Socials" icon={GlobeAltIcon} isActive={activeTab === 'socials'} onClick={setActiveTab} />
                     <TabButton id="platforms" label="Platforms" icon={Square3Stack3DIcon} isActive={activeTab === 'platforms'} onClick={setActiveTab} />
@@ -931,7 +962,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                     {/* Gallery Tab */}
                     {activeTab === 'gallery' && (
                       <div className={`gallery-masonry${isWebKit ? ' is-webkit' : ''}`}>
-                        {publicImages.map((photo: any, index: number) => {
+                        {galleryImages.map((photo: any, index: number) => {
                           const optimalSize = getGalleryImageSize();
                           return (
                             <GalleryItem
@@ -951,6 +982,11 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                           );
                         })}
                       </div>
+                    )}
+
+                    {/* Kinks Tab (NSFW only) */}
+                    {activeTab === 'kinks' && nsfwEnabled && (
+                      <KinksTable />
                     )}
 
                     {/* Hardware Tab */}

@@ -1,7 +1,7 @@
-import type { Profile } from '../types/index';
+import type { Profile, ProfileImage } from '../types/index';
 
-// Public images from the data (filtered for public access and non-ad)
-const imageUuids = [
+// Safe (SFW) images - public access
+const safeImageUuids = [
   "2c29f88b-2e48-4684-96f6-b1f909e3f052",
   "94aaa28e-5cff-4b33-b411-74df6dcedd6a",
   "7b398a2a-9cb0-41b0-b9d7-d91c3b940dfc",
@@ -36,6 +36,8 @@ const imageUuids = [
   "25825efd-833f-4f94-8405-bd24c76ada69",
   "a3e3af5e-8e1f-4191-8cb2-e1d34a7c5eea",
   "a8ea22a6-c128-4dd1-86aa-ff23e304f5fb",
+  "d9b2d763-54dc-41d4-b2d9-f87960f4d830",
+  "e0aec27e-11ef-4756-a4e6-852706fd2a7b",
   "724b4bc8-1cae-4675-b9f1-102c1d6d612c",
   "69da6263-0733-40c8-9444-11cfc7e601e7",
   "3100afc4-74e4-447f-b90c-89022d3d90d0",
@@ -47,11 +49,30 @@ const imageUuids = [
   "dfe10741-949c-4cfa-9c76-e6ce2f5f15e5"
 ];
 
-const images = imageUuids.map((uuid, index) => ({
+// NSFW/Explicit images - shown when NSFW mode is enabled (in main gallery)
+const nsfwImageUuids: string[] = [
+  "4608b880-41ea-4980-8a54-b92e67b979da",
+  "652d638d-04a2-468d-9502-d26ecd15eb8a",
+  "257f112a-f7be-4c80-8992-14fc0e6ea35c",
+  "84a67cc8-6861-4843-8c7a-d3d8875327d4",
+  "b28e2af3-e87e-4fd9-ad9d-34cc2c658210",
+  "74c50532-e137-4b41-b969-ee58a46ebd25",
+  "6f0028f2-05a8-4336-a5b9-bab273084985",
+  "995e89a2-5b8e-47f8-88b0-97296c9f2478",
+  "22ac6898-ecb0-4524-ad6b-1fc96eac2b84",
+  "4b3d9a8b-05bd-4b72-8e4d-1c7d0bb86f58",
+  "cf113d81-a62b-4931-b253-050b5b8607e7",
+  "c3734f63-d60a-4364-87a5-a2be25e43c2c",
+  "0528cd23-0324-4dbb-b392-eca4bb6928a7",
+];
+
+
+// Create safe images array
+const safeImages: ProfileImage[] = safeImageUuids.map((uuid, index) => ({
   id: `image_${index + 1}`,
   image: {
     uuid,
-    contentRating: "safe",
+    contentRating: 'safe' as const,
     width: 774,
     height: 773,
     blurHash: "U8AvLg$+~CRj%NR*I:R*xbs:M{j@=|R*axWp"
@@ -59,6 +80,23 @@ const images = imageUuids.map((uuid, index) => ({
   accessPermission: "public",
   isAd: false
 }));
+
+// Create NSFW images array
+const nsfwImages: ProfileImage[] = nsfwImageUuids.map((uuid, index) => ({
+  id: `nsfw_image_${index + 1}`,
+  image: {
+    uuid,
+    contentRating: 'nsfw' as const,
+    width: 774,
+    height: 773,
+    blurHash: "U8AvLg$+~CRj%NR*I:R*xbs:M{j@=|R*axWp"
+  },
+  accessPermission: "public",
+  isAd: false
+}));
+
+// Combine all images
+const images: ProfileImage[] = [...safeImages, ...nsfwImages];
 
 export const sampleProfile: Profile = {
   id: "7667",

@@ -1,7 +1,7 @@
 // Image Types
 export interface UploadedImage {
   uuid: string;
-  contentRating: string;
+  contentRating: 'safe' | 'nsfw';
   width: number;
   height: number;
   blurHash: string;
@@ -12,6 +12,7 @@ export interface ProfileImage {
   image: UploadedImage;
   accessPermission: string;
   isAd: boolean;
+  category?: string; // Optional category like 'kinks'
 }
 
 // Location Types
@@ -123,4 +124,18 @@ export interface StartPosition {
   height: number;
   centerX?: number;
   centerY?: number;
+}
+
+// Kink Types
+export interface Kink {
+  id: string;
+  displayName: string;
+  categoryName: string;
+  isSinglePlayer: boolean;
+}
+
+export interface ProfileKink {
+  pleasureGive: number; // -1 = No, 0 = Maybe, 1 = Yes, 2 = Fave
+  pleasureReceive: number;
+  kink: Kink;
 }
