@@ -753,7 +753,8 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   // Filter images based on NSFW preference
   const galleryImages = useMemo(() => {
     const publicImgs = profile.images.filter(
-      (img: any) => img.accessPermission === 'public' && !img.isAd
+      (img: any) => img.accessPermission === 'public' && !img.isAd &&
+                   img.image.uuid !== profile.profileImage.image.uuid // Exclude profile image
     );
 
     if (nsfwEnabled) {
@@ -765,7 +766,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
         (img: any) => img.image.contentRating === 'safe'
       );
     }
-  }, [profile.images, nsfwEnabled]);
+  }, [profile.images, profile.profileImage.image.uuid, nsfwEnabled]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('gallery');
