@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
+import { useWebHaptics } from 'web-haptics/react';
 import { useNSFW } from '../contexts/NSFWContext';
 import { Cog6ToothIcon, ShieldCheckIcon, XMarkIcon, TrashIcon, ServerStackIcon } from '@heroicons/react/24/outline';
 
 const NSFWToggle: React.FC = () => {
   const { nsfwEnabled, setNsfwEnabled, hasConsented, setHasConsented } = useNSFW();
+  const { trigger } = useWebHaptics();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!hasConsented) return null;
 
   const clearCache = () => {
+    trigger('light');
     // Clear browser cache by reloading with cache bypass
     window.location.reload();
   };
 
   const clearCookies = () => {
+    trigger('medium');
     // Clear all cookies
     document.cookie.split(";").forEach((c) => {
       document.cookie = c
@@ -34,7 +38,10 @@ const NSFWToggle: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-white">Site Settings</h3>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  trigger('light');
+                  setIsOpen(false);
+                }}
                 className="p-1 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <XMarkIcon className="w-4 h-4 text-white/50" />
@@ -58,7 +65,10 @@ const NSFWToggle: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setNsfwEnabled(!nsfwEnabled)}
+                  onClick={() => {
+                    trigger('medium');
+                    setNsfwEnabled(!nsfwEnabled);
+                  }}
                   className={`
                     relative w-12 h-6 rounded-full transition-colors duration-200
                     ${nsfwEnabled
@@ -109,7 +119,10 @@ const NSFWToggle: React.FC = () => {
 
       {/* Toggle Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          trigger('light');
+          setIsOpen(!isOpen);
+        }}
         className={`
           w-12 h-12 rounded-full flex items-center justify-center
           bg-[#1a1a1a] border border-[rgb(255,138,128)]/20

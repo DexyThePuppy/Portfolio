@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useWebHaptics } from 'web-haptics/react';
 import type { ProfileImage } from '../types/index';
 import { Z_INDEX, IMAGE_SIZES, MODAL_PADDING, ANIMATION_TIMINGS, GALLERY } from '../constants';
 
@@ -29,6 +30,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
   onClose,
   getImageUrl,
 }) => {
+  // Haptic feedback
+  const { trigger } = useWebHaptics();
+  
   // Core animation state
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -52,7 +56,92 @@ const ImageModal: React.FC<ImageModalProps> = ({
   const rotationResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isClosingRef = useRef(false);
   const loadTokenRef = useRef(0);
+  const hapticAnimationFrameRef = useRef<number | null>(null);
+  const hapticStartTimeRef = useRef<number | null>(null);
   
+  // Bounce easing function (matches CSS cubic-bezier(0.34, 1.56, 0.64, 1))
+  const bounceEase = useCallback((t: number): number => {
+    // Cubic bezier approximation for bounce effect
+    if (t < 0.5) {
+      return 4 * t * t * t;
+    } else {
+      const f = 2 * t - 2;
+      return 1 + f * f * f * 0.5;
+    }
+  }, []);
+
+  // Progressive haptic feedback synced to scale animation
+  const startProgressiveHaptics = useCallback(() => {
+    // Clear any existing animation
+    if (hapticAnimationFrameRef.current) {
+      cancelAnimationFrame(hapticAnimationFrameRef.current);
+    }
+
+    const startTime = performance.now();
+    hapticStartTimeRef.current = startTime;
+    const duration = 500; // Match transform transition duration
+    const startScale = GALLERY.DROP_SCALE;
+    const endScale = 1.0;
+    const scaleRange = endScale - startScale;
+    let lastVibrationTime = 0;
+    let finalVibrationTriggered = false;
+    const maxPause = 150; // Maximum pause between vibrations at start (ms)
+    const minPause = 0; // Minimum pause at end (ms)
+    const finalVibrationThreshold = 0.85; // Trigger final vibration at 85% of scale progress
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      
+      if (elapsed >= duration) {
+        hapticAnimationFrameRef.current = null;
+        hapticStartTimeRef.current = null;
+        return;
+      }
+
+      // Calculate progress (0 to 1)
+      const progress = elapsed / duration;
+      const easedProgress = bounceEase(progress);
+      
+      // Calculate current scale
+      const currentScale = startScale + (scaleRange * easedProgress);
+      
+      // Calculate vibration intensity based on scale progress
+      // Scale goes from 0.95 to 1.0, so we map that to vibration intensity
+      const scaleProgress = (currentScale - startScale) / scaleRange;
+      
+      // Trigger final strong vibration when scale progress reaches threshold
+      if (!finalVibrationTriggered && scaleProgress >= finalVibrationThreshold) {
+        trigger([{ duration: 35 }], { intensity: 1 });
+        finalVibrationTriggered = true;
+        lastVibrationTime = currentTime;
+      }
+      
+      // Calculate pause between vibrations - starts long, decreases to 0
+      // Use exponential curve for dramatic decrease: pause decreases faster as animation progresses
+      const exponentialProgress = 1 - Math.pow(1 - scaleProgress, 2.5);
+      const currentPause = maxPause - (exponentialProgress * (maxPause - minPause));
+      
+      // Trigger vibration after the calculated pause (but skip if we just triggered final vibration)
+      const timeSinceLastVibration = currentTime - lastVibrationTime;
+      
+      if (!finalVibrationTriggered && timeSinceLastVibration >= currentPause) {
+        // Intensity increases with scale progress (0.3 to 1.0)
+        const intensity = Math.max(0.3, Math.min(1.0, 0.3 + (scaleProgress * 0.7)));
+        // Duration increases slightly with scale progress (25ms to 40ms)
+        const vibrationDuration = Math.max(25, Math.min(40, 25 + (scaleProgress * 15)));
+        
+        // Use web-haptics API with options format
+        trigger([{ duration: vibrationDuration }], { intensity });
+        
+        lastVibrationTime = currentTime;
+      }
+
+      hapticAnimationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    hapticAnimationFrameRef.current = requestAnimationFrame(animate);
+  }, [bounceEase, trigger]);
+
   // Calculate expanded dimensions to fit screen
   const calculateExpandedDimensions = useCallback(() => {
     if (!imageDimensions) return null;
@@ -123,6 +212,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
     // Drop-in effect: scale down then bounce back
     setScale(GALLERY.DROP_SCALE);
     setTimeout(() => setScale(1), ANIMATION_TIMINGS.SCALE_DROP);
+    
+    // Note: Haptic feedback will trigger when image loads (in handleMediumLoaded)
 
     // Start progress simulation shortly after open (real load completion comes from <img onLoad>)
     progressStartTimeoutRef.current = setTimeout(() => {
@@ -145,8 +236,13 @@ const ImageModal: React.FC<ImageModalProps> = ({
         clearTimeout(rotationResetTimeoutRef.current);
         rotationResetTimeoutRef.current = null;
       }
+      if (hapticAnimationFrameRef.current) {
+        cancelAnimationFrame(hapticAnimationFrameRef.current);
+        hapticAnimationFrameRef.current = null;
+        hapticStartTimeRef.current = null;
+      }
     };
-  }, [selectedImage, initialRotation, openNonce]);
+  }, [selectedImage, initialRotation, openNonce, startProgressiveHaptics]);
 
   const handleMediumLoaded = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     // Ignore stale loads across rapid switches
@@ -157,7 +253,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
     const img = e.currentTarget;
     setMediumResLoaded(true);
     setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-  }, []);
+    
+    // Start progressive haptic feedback now that image is loaded
+    startProgressiveHaptics();
+  }, [startProgressiveHaptics]);
 
   const handleHighLoaded = useCallback(() => {
     if (progressIntervalRef.current) {
@@ -216,6 +315,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
     if (isClosingRef.current) return;
     isClosingRef.current = true;
     
+    // Haptic feedback on close
+    trigger('medium');
+    
     // Start close animation with scale-down effect
     setIsClosing(true);
     setIsOpen(false);
@@ -243,6 +345,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
       }
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
+      }
+      if (hapticAnimationFrameRef.current) {
+        cancelAnimationFrame(hapticAnimationFrameRef.current);
+        hapticAnimationFrameRef.current = null;
       }
     };
   }, []);
@@ -327,6 +433,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
           overflow: 'hidden',
           boxShadow: isOpen ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : 'none',
           zIndex: Z_INDEX.MODAL_CONTENT,
+          willChange: 'transform',
           backgroundColor: 'rgba(0,0,0,0.2)',
           transform: `rotate(${rotation}deg) scale(${scale})`,
           transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',

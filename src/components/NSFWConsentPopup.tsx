@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useWebHaptics } from 'web-haptics/react';
 import { useNSFW } from '../contexts/NSFWContext';
 import { ExclamationTriangleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 const NSFWConsentPopup: React.FC = () => {
   const { showConsentPopup, setNsfwEnabled } = useNSFW();
+  const { trigger } = useWebHaptics();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
@@ -16,6 +18,8 @@ const NSFWConsentPopup: React.FC = () => {
   }, [showConsentPopup]);
 
   const handleChoice = (enabled: boolean) => {
+    // Haptic feedback on choice
+    trigger(enabled ? 'medium' : 'light');
     setIsAnimatingOut(true);
     setTimeout(() => {
       setNsfwEnabled(enabled);

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useWebHaptics } from 'web-haptics/react';
 
 // Components
 import Banner from './Banner';
@@ -289,21 +290,28 @@ interface TabButtonProps {
   onClick: (tab: TabType) => void;
 }
 
-const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, onClick }) => (
-  <button
-    onClick={() => onClick(id)}
-    className={`
-      flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
-      ${isActive 
-        ? 'bg-[rgb(255,138,128)]/20 text-[rgb(255,138,128)] border border-[rgb(255,138,128)]/30' 
-        : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
-      }
-    `}
-  >
-    <Icon className="w-4 h-4" />
-    <span>{label}</span>
-  </button>
-);
+const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, onClick }) => {
+  const { trigger } = useWebHaptics();
+  
+  return (
+    <button
+      onClick={() => {
+        trigger('light');
+        onClick(id);
+      }}
+      className={`
+        flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
+        ${isActive 
+          ? 'bg-[rgb(255,138,128)]/20 text-[rgb(255,138,128)] border border-[rgb(255,138,128)]/30' 
+          : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+        }
+      `}
+    >
+      <Icon className="w-4 h-4" />
+      <span>{label}</span>
+    </button>
+  );
+};
 
 // ============================================================================
 // GRID CARD COMPONENTS (with rotation/scale effects)
@@ -745,6 +753,7 @@ SocialGridCard.displayName = 'SocialGridCard';
 
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const { nsfwEnabled } = useNSFW();
+  const { trigger } = useWebHaptics();
   
   const publicSocialAccounts = profile.socialAccounts.filter(
     (account: any) => account.accessPermission === 'public'
@@ -919,6 +928,8 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
   // Handle gallery image click
   const handleGalleryImageClick = (photo: ProfileImage, index: number, e: React.MouseEvent, rotation: number) => {
     e.stopPropagation();
+    // Haptic feedback on image click
+    trigger('light');
     // Visually "lift" the clicked tile out of the gallery while the modal animates
     setLiftedImageId(photo.id);
     const element = e.currentTarget as HTMLDivElement;

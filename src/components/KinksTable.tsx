@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
+import { useWebHaptics } from 'web-haptics/react';
 import { getPleasureLabel, getKinkCategories, getKinksByCategory } from '../data/kinksData';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -61,12 +62,16 @@ interface CategorySectionProps {
 
 const CategorySection: React.FC<CategorySectionProps> = ({ category, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const { trigger } = useWebHaptics();
   const kinks = getKinksByCategory(category);
   
   return (
     <div className="border border-white/10 rounded-xl overflow-hidden bg-black/20">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          trigger('light');
+          setIsOpen(!isOpen);
+        }}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-2">
