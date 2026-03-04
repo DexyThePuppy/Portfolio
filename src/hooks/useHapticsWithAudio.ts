@@ -72,7 +72,7 @@ export function useHapticsWithAudio() {
           if (typeof preset === 'string') {
             await playAudioHapticPreset(preset);
           } else {
-            const intensity = options?.intensity ?? (Array.isArray(preset) && preset[0]?.intensity) ?? 0.5;
+            const intensity = options?.intensity ?? (Array.isArray(preset) ? preset[0]?.intensity : undefined) ?? 0.5;
             await playAudioHaptic(intensity);
           }
         } catch (retryError) {
