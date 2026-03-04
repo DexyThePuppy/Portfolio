@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWebHaptics } from 'web-haptics/react';
+import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { getIconStyles, getBackgroundStyles, GRAIN_TEXTURE_URL } from '../utils/visualUtils';
 import type { TechItem, PlatformItem } from '../types';
@@ -31,14 +31,18 @@ export const EnhancedCard: React.FC<EnhancedCardProps> = React.memo(({
   className = '',
   children,
 }) => {
-  const { trigger } = useWebHaptics();
+  const { trigger } = useHapticsWithAudio();
+  
+  const handleClick = () => {
+    trigger('light');
+  };
   
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => trigger('light')}
+      onClick={handleClick}
       className={`
         group relative flex items-center rounded-xl
         bg-gradient-to-br ${color || 'from-gray-500/20 to-gray-600/20'}

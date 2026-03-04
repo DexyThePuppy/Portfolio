@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useWebHaptics } from 'web-haptics/react';
+import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import { useNSFW } from '../contexts/NSFWContext';
 import { Cog6ToothIcon, ShieldCheckIcon, XMarkIcon, TrashIcon, ServerStackIcon } from '@heroicons/react/24/outline';
 
 const NSFWToggle: React.FC = () => {
   const { nsfwEnabled, setNsfwEnabled, hasConsented, setHasConsented } = useNSFW();
-  const { trigger } = useWebHaptics();
+  const { trigger } = useHapticsWithAudio();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!hasConsented) return null;

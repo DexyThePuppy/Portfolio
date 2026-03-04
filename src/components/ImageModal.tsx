@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useWebHaptics } from 'web-haptics/react';
+import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import type { ProfileImage } from '../types/index';
 import { Z_INDEX, IMAGE_SIZES, MODAL_PADDING, ANIMATION_TIMINGS, GALLERY } from '../constants';
 
@@ -30,8 +30,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
   onClose,
   getImageUrl,
 }) => {
-  // Haptic feedback
-  const { trigger } = useWebHaptics();
+  // Haptic feedback with audio
+  const { trigger, triggerDrop } = useHapticsWithAudio();
   
   // Core animation state
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +49,13 @@ const ImageModal: React.FC<ImageModalProps> = ({
   // Scale state - for drop-in effect
   const [scale, setScale] = useState(1);
   
+  // Wiggle state for mobile fun effect
+  const [isWiggling, setIsWiggling] = useState(false);
+  
+  // Detect mobile device for wiggle effect
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || 
+    (typeof window !== 'undefined' && window.innerWidth <= 768);
+  
   // Refs
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -58,6 +65,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
   const loadTokenRef = useRef(0);
   const hapticAnimationFrameRef = useRef<number | null>(null);
   const hapticStartTimeRef = useRef<number | null>(null);
+  const wiggleAnimationFrameRef = useRef<number | null>(null);
   
   // Bounce easing function (matches CSS cubic-bezier(0.34, 1.56, 0.64, 1))
   const bounceEase = useCallback((t: number): number => {
@@ -71,6 +79,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
   }, []);
 
   // Progressive haptic feedback synced to scale animation
+  // Remastered for organic, natural feel
   const startProgressiveHaptics = useCallback(() => {
     // Clear any existing animation
     if (hapticAnimationFrameRef.current) {
@@ -83,11 +92,15 @@ const ImageModal: React.FC<ImageModalProps> = ({
     const startScale = GALLERY.DROP_SCALE;
     const endScale = 1.0;
     const scaleRange = endScale - startScale;
+    
     let lastVibrationTime = 0;
     let finalVibrationTriggered = false;
-    const maxPause = 150; // Maximum pause between vibrations at start (ms)
-    const minPause = 0; // Minimum pause at end (ms)
-    const finalVibrationThreshold = 0.85; // Trigger final vibration at 85% of scale progress
+    let lastEasedProgress = 0;
+    
+    // Natural pause range - organic spacing
+    const maxPause = 100; // Start with longer pauses
+    const minPause = 35; // End with shorter pauses
+    const finalVibrationThreshold = 0.88; // Final vibration near end
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
@@ -98,42 +111,51 @@ const ImageModal: React.FC<ImageModalProps> = ({
         return;
       }
 
-      // Calculate progress (0 to 1)
+      // Calculate progress using bounce easing
       const progress = elapsed / duration;
       const easedProgress = bounceEase(progress);
       
-      // Calculate current scale
+      // Calculate scale progress (0 to 1)
       const currentScale = startScale + (scaleRange * easedProgress);
-      
-      // Calculate vibration intensity based on scale progress
-      // Scale goes from 0.95 to 1.0, so we map that to vibration intensity
       const scaleProgress = (currentScale - startScale) / scaleRange;
       
-      // Trigger final strong vibration when scale progress reaches threshold
+      // Trigger final strong vibration near completion
       if (!finalVibrationTriggered && scaleProgress >= finalVibrationThreshold) {
         trigger([{ duration: 35 }], { intensity: 1 });
         finalVibrationTriggered = true;
         lastVibrationTime = currentTime;
+        lastEasedProgress = easedProgress;
+        hapticAnimationFrameRef.current = requestAnimationFrame(animate);
+        return;
       }
       
-      // Calculate pause between vibrations - starts long, decreases to 0
-      // Use exponential curve for dramatic decrease: pause decreases faster as animation progresses
-      const exponentialProgress = 1 - Math.pow(1 - scaleProgress, 2.5);
-      const currentPause = maxPause - (exponentialProgress * (maxPause - minPause));
+      // Calculate pause based on animation velocity (rate of change)
+      // Faster animation = shorter pauses (more frequent vibrations)
+      const progressDelta = easedProgress - lastEasedProgress;
+      const animationVelocity = progressDelta * 1000; // Velocity per second
       
-      // Trigger vibration after the calculated pause (but skip if we just triggered final vibration)
+      // Map velocity to pause: slow = long pause, fast = short pause
+      // Use smooth curve for natural feel
+      const velocityFactor = Math.max(0.1, Math.min(1.0, animationVelocity * 2));
+      const pauseFactor = 1 - (velocityFactor * 0.7); // Invert: high velocity = low pause factor
+      const currentPause = minPause + (maxPause - minPause) * pauseFactor;
+      
+      // Trigger vibration when enough time has passed
       const timeSinceLastVibration = currentTime - lastVibrationTime;
       
       if (!finalVibrationTriggered && timeSinceLastVibration >= currentPause) {
-        // Intensity increases with scale progress (0.3 to 1.0)
-        const intensity = Math.max(0.3, Math.min(1.0, 0.3 + (scaleProgress * 0.7)));
-        // Duration increases slightly with scale progress (25ms to 40ms)
-        const vibrationDuration = Math.max(25, Math.min(40, 25 + (scaleProgress * 15)));
+        // Intensity follows the same bounce easing curve as the animation
+        // This makes volume perfectly synchronized with visual progress
+        const intensity = 0.25 + (easedProgress * 0.65); // 0.25 to 0.9
         
-        // Use web-haptics API with options format
+        // Duration increases smoothly with scale progress
+        const vibrationDuration = 22 + (scaleProgress * 23); // 22ms to 45ms
+        
+        // Trigger haptic feedback
         trigger([{ duration: vibrationDuration }], { intensity });
         
         lastVibrationTime = currentTime;
+        lastEasedProgress = easedProgress;
       }
 
       hapticAnimationFrameRef.current = requestAnimationFrame(animate);
@@ -207,7 +229,51 @@ const ImageModal: React.FC<ImageModalProps> = ({
     setMediumResLoaded(false);
     setHighResStatus('loading');
     setLoadingProgress(0);
-    setRotation(initialRotation);
+    
+    // On mobile, add a fun wiggle rotation effect
+    if (isMobile) {
+      // Clear any existing wiggle animation
+      if (wiggleAnimationFrameRef.current) {
+        cancelAnimationFrame(wiggleAnimationFrameRef.current);
+      }
+      
+      setIsWiggling(true);
+      // Start with initial rotation
+      setRotation(initialRotation);
+      
+      // Use a sine wave for organic, non-linear wiggle motion
+      // Creates a natural, bouncy feel with decaying amplitude
+      const wiggleDuration = 1000; // Total duration in ms - slower
+      const startTime = performance.now();
+      
+      const wiggleAnimation = () => {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(elapsed / wiggleDuration, 1);
+        
+        if (progress >= 1) {
+          setRotation(initialRotation);
+          setIsWiggling(false);
+          wiggleAnimationFrameRef.current = null;
+          return;
+        }
+        
+        // Use ease-out curve for natural decay (cubic ease-out)
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        
+        // Sine wave with decaying amplitude and decreasing frequency for organic wiggle
+        // Frequency starts higher and decreases (oscillations slow down)
+        const frequency = 5 - (progress * 3); // Start at 5, decrease to 2
+        const amplitude = 4.5 * (1 - easedProgress); // Decay from 4.5° to 0° - more noticeable
+        const wiggle = Math.sin(progress * Math.PI * frequency) * amplitude;
+        
+        setRotation(initialRotation + wiggle);
+        wiggleAnimationFrameRef.current = requestAnimationFrame(wiggleAnimation);
+      };
+      
+      wiggleAnimationFrameRef.current = requestAnimationFrame(wiggleAnimation);
+    } else {
+      setRotation(initialRotation);
+    }
     
     // Drop-in effect: scale down then bounce back
     setScale(GALLERY.DROP_SCALE);
@@ -315,9 +381,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
     if (isClosingRef.current) return;
     isClosingRef.current = true;
     
-    // Haptic feedback on close
-    trigger('medium');
-    
     // Start close animation with scale-down effect
     setIsClosing(true);
     setIsOpen(false);
@@ -330,12 +393,16 @@ const ImageModal: React.FC<ImageModalProps> = ({
     
     // Wait for animation to complete, then notify parent
     closeTimeoutRef.current = setTimeout(() => {
+      // Drop haptic feedback - trigger at the very end when opacity reaches 0
+      // Low-pitched stone crash sound for impact feel
+      triggerDrop(0.9);
+      
       isClosingRef.current = false;
       setIsClosing(false);
       onClose();
       closeTimeoutRef.current = null;
     }, ANIMATION_TIMINGS.MODAL_CLOSE);
-  }, [onClose]);
+  }, [onClose, triggerDrop]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -349,6 +416,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
       if (hapticAnimationFrameRef.current) {
         cancelAnimationFrame(hapticAnimationFrameRef.current);
         hapticAnimationFrameRef.current = null;
+      }
+      if (wiggleAnimationFrameRef.current) {
+        cancelAnimationFrame(wiggleAnimationFrameRef.current);
+        wiggleAnimationFrameRef.current = null;
       }
     };
   }, []);
@@ -436,7 +507,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
           willChange: 'transform',
           backgroundColor: 'rgba(0,0,0,0.2)',
           transform: `rotate(${rotation}deg) scale(${scale})`,
-          transition: 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: isWiggling 
+            ? 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            : 'width 400ms cubic-bezier(0.4, 0, 0.2, 1), height 400ms cubic-bezier(0.4, 0, 0.2, 1), left 400ms cubic-bezier(0.4, 0, 0.2, 1), top 400ms cubic-bezier(0.4, 0, 0.2, 1), border-radius 400ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 400ms cubic-bezier(0.4, 0, 0.2, 1), transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
       >
         {/* Thumbnail preview (from gallery - instant) */}

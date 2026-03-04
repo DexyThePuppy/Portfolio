@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { useWebHaptics } from 'web-haptics/react';
+import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import { getPleasureLabel, getKinkCategories, getKinksByCategory } from '../data/kinksData';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -62,7 +62,7 @@ interface CategorySectionProps {
 
 const CategorySection: React.FC<CategorySectionProps> = ({ category, defaultOpen = false }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const { trigger } = useWebHaptics();
+  const { trigger } = useHapticsWithAudio();
   const kinks = getKinksByCategory(category);
   
   return (

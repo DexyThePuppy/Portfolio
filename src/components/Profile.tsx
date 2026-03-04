@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useWebHaptics } from 'web-haptics/react';
+import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
+import { playWhooshSound } from '../utils/audioHaptics';
 
 // Components
 import Banner from './Banner';
@@ -291,7 +292,7 @@ interface TabButtonProps {
 }
 
 const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, onClick }) => {
-  const { trigger } = useWebHaptics();
+  const { trigger } = useHapticsWithAudio();
   
   return (
     <button
@@ -344,6 +345,7 @@ interface TechGridCardProps {
 }
 
 const TechGridCard: React.FC<TechGridCardProps> = React.memo(({ item, hoveredId, setHoveredId }) => {
+  const { trigger } = useHapticsWithAudio();
   const [rotation, setRotation] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -404,6 +406,7 @@ const TechGridCard: React.FC<TechGridCardProps> = React.memo(({ item, hoveredId,
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trigger('light')}
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${item.color || 'from-gray-500/20 to-gray-600/20'}
@@ -469,6 +472,7 @@ interface PlatformGridCardProps {
 }
 
 const PlatformGridCard: React.FC<PlatformGridCardProps> = React.memo(({ platform, hoveredId, setHoveredId }) => {
+  const { trigger } = useHapticsWithAudio();
   const [rotation, setRotation] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -529,6 +533,7 @@ const PlatformGridCard: React.FC<PlatformGridCardProps> = React.memo(({ platform
           href={platform.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trigger('light')}
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${platform.color || 'from-gray-500/20 to-gray-600/20'}
@@ -601,6 +606,7 @@ interface SocialGridCardProps {
 }
 
 const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hoveredId, setHoveredId }) => {
+  const { trigger } = useHapticsWithAudio();
   const [rotation, setRotation] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -664,6 +670,7 @@ const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hov
           href={account.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trigger('light')}
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${colors.gradient}
@@ -753,7 +760,7 @@ SocialGridCard.displayName = 'SocialGridCard';
 
 const Profile: React.FC<ProfileProps> = ({ profile }) => {
   const { nsfwEnabled } = useNSFW();
-  const { trigger } = useWebHaptics();
+  const { trigger } = useHapticsWithAudio();
   
   const publicSocialAccounts = profile.socialAccounts.filter(
     (account: any) => account.accessPermission === 'public'
@@ -910,6 +917,11 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
     // Store the rotation for modal
     setInitialRotation(rotation);
+
+    // Play whoosh sound immediately when image is clicked (before modal opens)
+    playWhooshSound(0.5).catch(() => {
+      // Silently fail if whoosh sound is unavailable
+    });
 
     // Get the clicked image position immediately
     const rect = element.getBoundingClientRect();
