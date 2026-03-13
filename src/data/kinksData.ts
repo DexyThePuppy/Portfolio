@@ -109,19 +109,19 @@ export const kinksData: ProfileKink[] = [
   { pleasureGive: 1, pleasureReceive: 1, kink: { id: "88", displayName: "Wetting", categoryName: "Bodily Fluids", isSinglePlayer: false } },
 ];
 
-// Helper to get pleasure level label and color
+// Helper to get pleasure level label and color (semantic: Fave=coral, Yes=green, Maybe=amber, No=red)
 export const getPleasureLabel = (value: number): { label: string; color: string; bgColor: string } => {
   switch (value) {
     case -1:
-      return { label: 'No', color: 'text-red-400', bgColor: 'bg-red-500/20' };
+      return { label: 'No', color: 'text-[var(--badge-no-text)]', bgColor: 'bg-[var(--badge-no-bg)]' };
     case 0:
-      return { label: 'Maybe', color: 'text-yellow-400', bgColor: 'bg-yellow-500/20' };
+      return { label: 'Maybe', color: 'text-[var(--badge-maybe-text)]', bgColor: 'bg-[var(--badge-maybe-bg)]' };
     case 1:
-      return { label: 'Yes', color: 'text-green-400', bgColor: 'bg-green-500/20' };
+      return { label: 'Yes', color: 'text-[var(--badge-yes-text)]', bgColor: 'bg-[var(--badge-yes-bg)]' };
     case 2:
-      return { label: 'Fave', color: 'text-pink-400', bgColor: 'bg-pink-500/20' };
+      return { label: 'Fave', color: 'text-[var(--badge-fave-text)]', bgColor: 'bg-[var(--badge-fave-bg)]' };
     default:
-      return { label: '?', color: 'text-gray-400', bgColor: 'bg-gray-500/20' };
+      return { label: '?', color: 'text-on-surface-variant', bgColor: 'bg-surface-container' };
   }
 };
 

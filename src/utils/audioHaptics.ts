@@ -9,18 +9,25 @@ class AudioHaptics {
   private audioFilter: BiquadFilterNode | null = null;
   private audioGain: GainNode | null = null;
   private audioBuffer: AudioBuffer | null = null;
-  private initialized = false;
   private clickCount = 0; // Track clicks for pattern variation
   private whooshAudioBuffer: AudioBuffer | null = null;
   private whooshAudioLoading = false;
 
   /**
-   * Initialize audio context and nodes
+   * Resume AudioContext if suspended. Call synchronously at start of user gesture (iOS).
+   */
+  tryResumeSync(): void {
+    if (this.audioCtx?.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+  }
+
+  /**
+   * Initialize audio context and nodes.
+   * On iOS: call only from user gesture (e.g. button click) so context can resume.
    */
   async ensureAudio(): Promise<void> {
-    if (this.initialized || typeof AudioContext === 'undefined') {
-      return;
-    }
+    if (typeof AudioContext === 'undefined') return;
 
     if (!this.audioCtx) {
       this.audioCtx = new AudioContext();
@@ -53,7 +60,6 @@ class AudioHaptics {
       await this.audioCtx.resume();
     }
 
-    this.initialized = true;
   }
 
   /**
@@ -229,7 +235,7 @@ class AudioHaptics {
    */
   async playWhoosh(volume: number = 1.0): Promise<void> {
     try {
-      // Ensure audio context is initialized
+      this.tryResumeSync();
       await this.ensureAudio();
       if (!this.audioCtx) {
         console.debug('Audio context not available for whoosh');
@@ -288,7 +294,6 @@ class AudioHaptics {
       this.audioFilter = null;
       this.audioGain = null;
       this.audioBuffer = null;
-      this.initialized = false;
     }
     this.whooshAudioBuffer = null;
     this.whooshAudioLoading = false;
@@ -315,6 +320,7 @@ export function getAudioHaptics(): AudioHaptics {
  */
 export async function playAudioHaptic(intensity: number = 0.5, pitchMultiplier: number = 1.0): Promise<void> {
   const audioHaptics = getAudioHaptics();
+  audioHaptics.tryResumeSync();
   await audioHaptics.ensureAudio();
   audioHaptics.playClick(intensity, pitchMultiplier);
 }
@@ -325,6 +331,7 @@ export async function playAudioHaptic(intensity: number = 0.5, pitchMultiplier: 
  */
 export async function playDropHaptic(intensity: number = 1.0): Promise<void> {
   const audioHaptics = getAudioHaptics();
+  audioHaptics.tryResumeSync();
   await audioHaptics.ensureAudio();
   // Use 0.4 pitch multiplier for deep, low-pitched stone crash sound
   // Single, longer sound instead of multiple pulses to avoid double-play

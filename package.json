@@ -22,6 +22,7 @@
     "@material/web": "^2.3.0",
     "@mui/icons-material": "^7.0.2",
     "@mui/material": "^7.0.2",
+    "@phosphor-icons/react": "^2.1.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "web-haptics": "^0.0.6"

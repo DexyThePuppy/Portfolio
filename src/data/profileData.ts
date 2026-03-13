@@ -11,8 +11,7 @@ import {
   MusicalNoteIcon,
   PhotoIcon,
   ComputerDesktopIcon,
-} from '@heroicons/react/24/outline';
-import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+} from '@heroicons/react/24/solid';
 
 // Types
 export interface InfoItem {
@@ -74,7 +73,7 @@ export const statsInfo: StatCategory[] = [
     category: 'Traits',
     items: [
       { id: '1', title: 'Totally Innocent', icon: FaceSmileIcon },
-      { id: '2', title: 'Cuddle Buddy', icon: HeartIconSolid }
+      { id: '2', title: 'Cuddle Buddy', icon: HeartIcon }
     ]
   },
   {
@@ -83,7 +82,7 @@ export const statsInfo: StatCategory[] = [
       { id: '1', title: 'Overwhelmed fast', icon: HandRaisedIcon },
       { id: '2', title: 'Sensitive', icon: HeartIcon },
       { id: '3', title: 'Pretty shy', icon: FaceSmileIcon },
-      { id: '4', title: 'Big Spoon', icon: HeartIconSolid }
+      { id: '4', title: 'Big Spoon', icon: HeartIcon }
     ]
   }
 ];

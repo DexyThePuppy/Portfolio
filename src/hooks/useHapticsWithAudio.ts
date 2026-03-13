@@ -2,21 +2,48 @@ import { useCallback, useEffect } from 'react';
 import { useWebHaptics } from 'web-haptics/react';
 import { playAudioHaptic, playAudioHapticPreset, playDropHaptic, getAudioHaptics } from '../utils/audioHaptics';
 
+/** iOS: Vibration API unsupported; audio is the primary feedback. */
+const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+/** iPad on iOS 13+ can report as Mac; check maxTouchPoints */
+const isIPad = typeof navigator !== 'undefined'
+  && navigator.platform === 'MacIntel'
+  && navigator.maxTouchPoints > 1;
+
+let audioUnlockAttached = false;
+/** Unlock AudioContext on first user interaction. iOS: touchend. Mac: mousedown/click. */
+function useAudioUnlock() {
+  useEffect(() => {
+    if (audioUnlockAttached) return;
+    audioUnlockAttached = true;
+    const unlock = () => {
+      getAudioHaptics().tryResumeSync();
+    return () => document.removeEventListener('touchend', unlock);
+      getAudioHaptics().ensureAudio().catch(() => {});
+    };
+    if (isIOS || isIPad) {
+      document.addEventListener('touchend', unlock, { once: true, passive: true });
+    } else {
+      document.addEventListener('mousedown', unlock, { once: true, passive: true });
+      document.addEventListener('click', unlock, { once: true, passive: true });
+    }
+  }, []);
+}
+
 /**
  * Custom hook that combines web-haptics with audio feedback
- * Provides haptic feedback with audio fallback/supplement
+ * On iOS: audio-only (Vibration API not supported). AudioContext created/resumed on first user gesture.
  */
 export function useHapticsWithAudio() {
   const { trigger: webHapticsTrigger } = useWebHaptics();
+  useAudioUnlock();
 
   // Initialize audio eagerly on mount (will be activated on first user interaction)
   useEffect(() => {
     const initAudio = async () => {
-      // Try to initialize audio context immediately
       try {
         await getAudioHaptics().ensureAudio();
-      } catch (error) {
-        // If immediate init fails, wait for user interaction
+      } catch {
         const handleInteraction = async () => {
           try {
             await getAudioHaptics().ensureAudio();
@@ -27,13 +54,11 @@ export function useHapticsWithAudio() {
           document.removeEventListener('touchstart', handleInteraction);
           document.removeEventListener('keydown', handleInteraction);
         };
-
         document.addEventListener('click', handleInteraction, { once: true });
         document.addEventListener('touchstart', handleInteraction, { once: true });
         document.addEventListener('keydown', handleInteraction, { once: true });
       }
     };
-
     initAudio();
   }, []);
 
@@ -48,6 +73,9 @@ export function useHapticsWithAudio() {
       preset?: string | Array<{ delay?: number; duration: number; intensity?: number }>,
       options?: { intensity?: number }
     ) => {
+      // iOS: resume AudioContext synchronously while still in user gesture stack
+      getAudioHaptics().tryResumeSync();
+
       // Always play audio feedback first (ensures it plays even if vibration fails)
       try {
         if (typeof preset === 'string') {
@@ -81,12 +109,13 @@ export function useHapticsWithAudio() {
         }
       }
 
-      // Also trigger web-haptics vibration (if available)
-      try {
-        webHapticsTrigger(preset as any, options as any);
-      } catch (error) {
-        // Vibration failed, but audio already played
-        console.debug('Vibration haptic feedback unavailable:', error);
+      // Trigger web-haptics vibration (skip on iOS – Vibration API unsupported)
+      if (!isIOS) {
+        try {
+          webHapticsTrigger(preset as any, options as any);
+        } catch (error) {
+          console.debug('Vibration haptic feedback unavailable:', error);
+        }
       }
     },
     [webHapticsTrigger]
@@ -98,7 +127,7 @@ export function useHapticsWithAudio() {
    */
   const triggerDrop = useCallback(
     async (intensity: number = 1.0) => {
-      // Play low-pitched drop sound (only once)
+      getAudioHaptics().tryResumeSync();
       try {
         await playDropHaptic(intensity);
       } catch (error) {
@@ -111,14 +140,15 @@ export function useHapticsWithAudio() {
         }
       }
 
-      // Also trigger vibration
-      try {
-        webHapticsTrigger([
-          { duration: 30 },
-          { delay: 10, duration: 40 }
-        ], { intensity });
-      } catch (error) {
-        console.debug('Drop vibration unavailable:', error);
+      if (!isIOS) {
+        try {
+          webHapticsTrigger([
+            { duration: 30 },
+            { delay: 10, duration: 40 }
+          ], { intensity });
+        } catch (error) {
+          console.debug('Drop vibration unavailable:', error);
+        }
       }
     },
     [webHapticsTrigger]

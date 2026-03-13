@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/solid';
 import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import type { ProfileImage } from '../types/index';
 import { Z_INDEX, IMAGE_SIZES, MODAL_PADDING, ANIMATION_TIMINGS, GALLERY } from '../constants';
@@ -457,7 +457,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
     >
       {/* Close button */}
       <button
-        className={`absolute top-4 right-4 text-white hover:text-gray-300 transition-opacity duration-300 ${
+        className={`absolute top-4 right-4 text-on-surface hover:text-on-surface-variant transition-opacity duration-300 ${
           isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
@@ -476,11 +476,11 @@ const ImageModal: React.FC<ImageModalProps> = ({
           style={{ zIndex: Z_INDEX.MODAL_LOADING }}
         >
           <div className="flex flex-col items-center gap-4 bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4">
-            <svg className="animate-spin h-10 w-10 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-10 w-10 text-on-surface" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <div className="text-white text-sm font-medium">
+            <div className="text-on-surface text-sm font-medium">
               {!mediumResLoaded 
                 ? 'Loading...' 
                 : loadingProgress > 0 

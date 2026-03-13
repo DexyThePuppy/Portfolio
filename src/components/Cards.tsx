@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid';
 import { getIconStyles, getBackgroundStyles, GRAIN_TEXTURE_URL } from '../utils/visualUtils';
 import type { TechItem, PlatformItem } from '../types';
 
@@ -46,8 +46,8 @@ export const EnhancedCard: React.FC<EnhancedCardProps> = React.memo(({
       className={`
         group relative flex items-center rounded-xl
         bg-gradient-to-br ${color || 'from-gray-500/20 to-gray-600/20'}
-        border border-[rgb(255,138,128)]/10
-        hover:border-[rgb(255,138,128)]/30 hover:scale-105
+        border border-[var(--color-primary-muted)]
+        hover:border-[var(--color-primary-30)] hover:scale-105
         transition-all duration-300 ease-out
         cursor-pointer overflow-hidden
         ${className}
@@ -148,22 +148,22 @@ export const renderTechCard = (item: TechItem) => (
     
     {/* Content */}
     <div className="relative flex-1 min-w-0">
-      <h4 className="text-xs font-bold text-white leading-tight truncate">
+      <h4 className="text-xs font-bold text-on-surface leading-tight truncate">
         {item.name}
       </h4>
-      <p className="text-[10px] text-gray-400 leading-tight truncate">
+      <p className="text-[10px] text-on-surface-variant leading-tight truncate">
         {item.spec}
       </p>
     </div>
 
     {/* Category tag */}
-    <span className="relative text-[8px] uppercase tracking-wider text-gray-500 font-medium px-1.5 py-0.5 bg-black/30 rounded flex-shrink-0 hidden md:inline">
+    <span className="relative text-[8px] uppercase tracking-wider text-on-surface-variant font-medium px-1.5 py-0.5 bg-black/30 rounded flex-shrink-0 hidden md:inline">
       {item.category}
     </span>
 
     {/* External link indicator */}
     <div className="relative flex-shrink-0 w-0 group-hover:w-4 overflow-hidden transition-all duration-300 ease-out">
-      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-gray-400" />
+      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-on-surface-variant" />
     </div>
   </EnhancedCard>
 );
@@ -192,15 +192,15 @@ export const renderPlatformCard = (platform: PlatformItem) => (
     
     {/* Content */}
     <div className="relative flex-1 min-w-0">
-      <h4 className="text-sm font-bold text-white leading-tight">
+      <h4 className="text-sm font-bold text-on-surface leading-tight">
         {platform.name}
       </h4>
-      <p className="text-xs text-gray-400 leading-tight">
+      <p className="text-xs text-on-surface-variant leading-tight">
         {platform.description}
       </p>
     </div>
 
     {/* External link indicator */}
-    <ArrowTopRightOnSquareIcon className="relative w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0" />
+    <ArrowTopRightOnSquareIcon className="relative w-4 h-4 text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0" />
   </EnhancedCard>
 );

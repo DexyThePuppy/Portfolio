@@ -23,7 +23,7 @@ export const InfoBadge: React.FC<InfoBadgeProps> = React.memo(({ icon: Icon, tex
         className="flex-shrink-0 w-5 h-5 flex items-center justify-center tech-icon-rotate"
         style={getIconStyles(id, text)}
       >
-        <Icon className="w-5 h-5 text-[rgb(255,138,128)]" />
+        <Icon className="w-5 h-5 text-primary" />
       </div>
       <span className="text-sm">{text}</span>
     </div>

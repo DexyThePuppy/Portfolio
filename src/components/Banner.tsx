@@ -75,7 +75,7 @@ const Banner: React.FC<BannerProps> = React.memo(({ imageUrl, isModalOpen = fals
       
       {/* Gradient Overlay - Fixed with banner */}
       <div 
-        className="fixed top-0 left-0 right-0 bg-gradient-to-b from-transparent to-secondary z-0 opacity-80" 
+        className="fixed top-0 left-0 right-0 bg-gradient-to-b from-transparent to-background z-0 opacity-80" 
         style={{ height: BANNER.HEIGHT }}
       />
     </>

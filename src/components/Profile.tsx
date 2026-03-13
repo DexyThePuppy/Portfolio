@@ -10,10 +10,12 @@ import {
   StatsSection,
   HobbiesSection,
 } from './sections';
+import SettingsContent from './SettingsContent';
 import type { Language, TechItem, PlatformItem } from '../data/profileData';
 
 // Context
 import { useNSFW } from '../contexts/NSFWContext';
+import { useTab, type TabType } from '../contexts/TabContext';
 
 // Icons
 import { 
@@ -26,8 +28,9 @@ import {
   GlobeAltIcon,
   Square3Stack3DIcon,
   FireIcon,
-} from '@heroicons/react/24/outline';
-import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+  HeartIcon,
+  Cog6ToothIcon,
+} from '@heroicons/react/24/solid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getSocialIcon, getSocialColors, getSocialDisplayName, getSocialCustomIcon } from '../utils/socialNetworks';
 import { getIconStyles, getBackgroundStyles, GRAIN_TEXTURE_URL } from '../utils/visualUtils';
@@ -158,8 +161,8 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
           className="rounded-xl overflow-hidden"
           style={{
             boxShadow: isHovered 
-              ? '0 0 0 6px #1A1A1A' 
-              : '0 0 0 1px rgba(255, 138, 128, 0.1)',
+              ? '0 0 0 6px var(--md-sys-color-background)' 
+              : '0 0 0 1px var(--color-primary-muted)',
             transition: 'box-shadow 300ms ease-out',
           }}
         >
@@ -210,65 +213,64 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
   personality,
   languages: langs,
 }) => {
+  const chip = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container border border-[var(--color-primary-muted)] text-xs font-semibold text-on-surface hover:bg-surface-container-high transition-all duration-200";
+
   return (
     <div className="mb-6">
-      {/* Compact Header Layout */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        
+      <div className="flex flex-col sm:flex-row gap-5">
+
         {/* Profile Image */}
         <div className="relative group flex-shrink-0 mx-auto sm:mx-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-[rgb(255,138,128)] to-pink-600 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary to-tertiary rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300" />
           <img
             src={profileImageUrl}
             alt={displayName}
-            className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl object-cover border-2 border-[rgb(255,138,128)]/40 group-hover:border-[rgb(255,138,128)]/70 transition-all duration-300 group-hover:scale-[1.02]"
+            className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover border-2 border-[var(--color-primary-40)] group-hover:border-[var(--color-primary-70)] transition-all duration-300 group-hover:scale-[1.02]"
           />
         </div>
 
         {/* Info Section */}
-        <div className="flex-1 flex flex-col justify-center text-center sm:text-left">
+        <div className="flex-1 flex flex-col justify-center gap-3 text-center sm:text-left">
+
           {/* Name & Location */}
-          <div className="mb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">{displayName}</h1>
-            <p className="text-white/60 text-sm flex items-center gap-1.5 justify-center sm:justify-start">
-              <MapPinIcon className="w-4 h-4" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-on-background leading-tight">{displayName}</h1>
+            <p className="text-on-background/60 text-sm flex items-center gap-1.5 justify-center sm:justify-start mt-1">
+              <MapPinIcon className="w-3.5 h-3.5 flex-shrink-0" />
               {location.region}, {location.country}
             </p>
           </div>
 
-          {/* Unified Badge Section */}
+          {/* Row 1 – Personal: age · orientation · relationship · personality */}
           <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-            {/* Info Badges */}
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all">
-              <SparklesIcon className="w-3 h-3 text-[rgb(255,138,128)]" />
-              {species}
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all">
-              <CakeIcon className="w-3 h-3 text-blue-400" />
+            <span className={chip}>
+              <CakeIcon className="w-3 h-3 text-secondary" />
               {age} years
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all">
-              <HeartIconSolid className="w-3 h-3 text-pink-400" />
+            <span className={chip}>🏳️‍🌈 Gay</span>
+            <span className={chip}>
+              <HeartIcon className="w-3 h-3 text-primary" />
               {relationshipStatus}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all">
-              <UserGroupIcon className="w-3 h-3 text-purple-400" />
+            <span className={chip}>
+              <UserGroupIcon className="w-3 h-3 text-tertiary" />
               {personality}
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all">
-              🏳️‍🌈 Gay
+          </div>
+
+          {/* Row 2 – Character: species · languages */}
+          <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+            <span className={chip}>
+              <SparklesIcon className="w-3 h-3 text-primary" />
+              {species}
             </span>
-            
-            {/* Language Badges */}
             {langs.map((lang) => (
-              <span
-                key={lang.id}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-white/90 hover:bg-white/10 hover:border-white/20 transition-all"
-              >
+              <span key={lang.id} className={chip}>
                 {lang.flag} {lang.name}
               </span>
             ))}
           </div>
+
         </div>
       </div>
     </div>
@@ -280,8 +282,6 @@ ProfileHeader.displayName = 'ProfileHeader';
 // ============================================================================
 // TAB TYPES & COMPONENTS
 // ============================================================================
-
-type TabType = 'gallery' | 'kinks' | 'tech' | 'socials' | 'platforms';
 
 interface TabButtonProps {
   id: TabType;
@@ -303,13 +303,38 @@ const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, 
       className={`
         flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
         ${isActive 
-          ? 'bg-[rgb(255,138,128)]/20 text-[rgb(255,138,128)] border border-[rgb(255,138,128)]/30' 
-          : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white/80'
+          ? 'bg-[var(--color-primary-muted-strong)] text-primary border border-[var(--color-primary-30)]' 
+          : 'bg-on-surface-5 text-on-surface-variant border border-on-surface-10 hover:bg-on-surface-10 hover:text-on-background'
         }
       `}
     >
       <Icon className="w-4 h-4" />
       <span>{label}</span>
+    </button>
+  );
+};
+
+const SettingsTabButton: React.FC = () => {
+  const { trigger } = useHapticsWithAudio();
+  const { activeTab, setActiveTab } = useTab();
+
+  return (
+    <button
+      onClick={() => {
+        trigger('light');
+        setActiveTab('settings');
+      }}
+      className={`
+        flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
+        ${activeTab === 'settings'
+          ? 'bg-[var(--color-primary-muted-strong)] text-primary border border-[var(--color-primary-30)]'
+          : 'bg-on-surface-5 text-on-surface-variant border border-on-surface-10 hover:bg-on-surface-10 hover:text-on-background'
+        }
+      `}
+      title="Settings"
+    >
+      <Cog6ToothIcon className="w-4 h-4" />
+      <span>Settings</span>
     </button>
   );
 };
@@ -410,8 +435,8 @@ const TechGridCard: React.FC<TechGridCardProps> = React.memo(({ item, hoveredId,
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${item.color || 'from-gray-500/20 to-gray-600/20'}
-            border border-[rgb(255,138,128)]/10
-            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+            border border-[var(--color-primary-muted)]
+            ${isHovered ? 'border-[var(--color-primary-40)]' : ''}
           `}
           style={getIconStyles(item.id, item.name)}
         >
@@ -449,11 +474,11 @@ const TechGridCard: React.FC<TechGridCardProps> = React.memo(({ item, hoveredId,
               }}
             />
             <div className="flex-shrink-0">
-              <span className="text-[8px] uppercase tracking-wider text-[rgb(255,138,128)] font-medium block">
+              <span className="text-[8px] uppercase tracking-wider text-primary font-medium block">
                 {item.category}
               </span>
-              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{item.name}</h4>
-              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{item.spec}</p>
+              <h4 className="text-sm font-bold text-on-background leading-tight whitespace-nowrap">{item.name}</h4>
+              <p className="text-xs text-on-surface-variant leading-tight whitespace-nowrap">{item.spec}</p>
             </div>
           </div>
         </a>
@@ -537,8 +562,8 @@ const PlatformGridCard: React.FC<PlatformGridCardProps> = React.memo(({ platform
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${platform.color || 'from-gray-500/20 to-gray-600/20'}
-            border border-[rgb(255,138,128)]/10
-            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+            border border-[var(--color-primary-muted)]
+            ${isHovered ? 'border-[var(--color-primary-40)]' : ''}
           `}
           style={getIconStyles(platform.id, platform.name)}
         >
@@ -576,8 +601,8 @@ const PlatformGridCard: React.FC<PlatformGridCardProps> = React.memo(({ platform
               }}
             />
             <div className="flex-shrink-0">
-              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{platform.name}</h4>
-              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{platform.description}</p>
+              <h4 className="text-sm font-bold text-on-background leading-tight whitespace-nowrap">{platform.name}</h4>
+              <p className="text-xs text-on-surface-variant leading-tight whitespace-nowrap">{platform.description}</p>
             </div>
           </div>
         </a>
@@ -674,8 +699,8 @@ const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hov
           className={`
             flex relative rounded-xl overflow-hidden w-full
             bg-gradient-to-br ${colors.gradient}
-            border border-[rgb(255,138,128)]/10
-            ${isHovered ? 'border-[rgb(255,138,128)]/40' : ''}
+            border border-[var(--color-primary-muted)]
+            ${isHovered ? 'border-[var(--color-primary-40)]' : ''}
           `}
           style={getIconStyles(account.id, account.socialNetwork)}
         >
@@ -732,7 +757,7 @@ const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hov
               />
             ) : (
               <GlobeAltIcon 
-                className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg text-white flex-shrink-0" 
+                className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg text-on-background flex-shrink-0" 
                 style={{
                   transform: isHovered 
                     ? `scale(1.15) rotate(${initialIconRotation + 5}deg)` 
@@ -742,8 +767,8 @@ const SocialGridCard: React.FC<SocialGridCardProps> = React.memo(({ account, hov
               />
             )}
             <div className="flex-shrink-0">
-              <h4 className="text-sm font-bold text-white leading-tight whitespace-nowrap">{getSocialDisplayName(account.socialNetwork)}</h4>
-              <p className="text-xs text-gray-400 leading-tight whitespace-nowrap">{account.value}</p>
+              <h4 className="text-sm font-bold text-on-background leading-tight whitespace-nowrap">{getSocialDisplayName(account.socialNetwork)}</h4>
+              <p className="text-xs text-on-surface-variant leading-tight whitespace-nowrap">{account.value}</p>
             </div>
           </div>
         </a>
@@ -784,15 +809,14 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     }
   }, [profile.images, profile.profileImage.image.uuid, nsfwEnabled]);
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<TabType>('gallery');
+  const { activeTab, setActiveTab } = useTab();
 
   // Switch away from kinks tab if NSFW is disabled
   useEffect(() => {
     if (!nsfwEnabled && activeTab === 'kinks') {
       setActiveTab('gallery');
     }
-  }, [nsfwEnabled, activeTab]);
+  }, [nsfwEnabled, activeTab, setActiveTab]);
 
   // WebKit detection for Safari-specific styling
   const [isWebKit, setIsWebKit] = useState(false);
@@ -966,7 +990,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
 
   return (
-    <div className="min-h-screen bg-secondary text-white">
+    <div className="min-h-screen bg-background text-on-background">
       <Banner imageUrl="/img/banner.JPEG" isModalOpen={isModalOpen} />
 
       {/* Scrollable Content Area */}
@@ -975,7 +999,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
         <div className="h-[25vh]" />
 
         {/* Main Content with dark background */}
-        <div className="bg-secondary min-h-[35vh] rounded-t-3xl shadow-lg pt-8 border-t border-[rgb(255,138,128)]/10 backdrop-blur-sm">
+        <div className="bg-background min-h-[35vh] rounded-t-3xl shadow-lg pt-8 border-t border-[var(--color-primary-muted)] backdrop-blur-sm">
           <div className="container mx-auto px-4">
             <ProfileHeader
               displayName={profile.displayName}
@@ -1011,32 +1035,39 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                     <TabButton id="tech" label="Hardware" icon={CpuChipIcon} isActive={activeTab === 'tech'} onClick={setActiveTab} />
                     <TabButton id="socials" label="Socials" icon={GlobeAltIcon} isActive={activeTab === 'socials'} onClick={setActiveTab} />
                     <TabButton id="platforms" label="Platforms" icon={Square3Stack3DIcon} isActive={activeTab === 'platforms'} onClick={setActiveTab} />
+                    <SettingsTabButton />
                   </div>
 
                   {/* Tab Content */}
                   <div>
                     {/* Gallery Tab */}
                     {activeTab === 'gallery' && (
-                      <div className={`gallery-masonry${isWebKit ? ' is-webkit' : ''}`}>
-                        {galleryImages.map((photo: any, index: number) => {
-                          const optimalSize = getGalleryImageSize();
-                          return (
-                            <GalleryItem
-                              key={photo.id}
-                              photo={photo}
-                              index={index}
-                              isLoaded={true}
-                              optimalSize={optimalSize}
-                              displayName={profile.displayName}
-                              getModifiedImageUrl={getModifiedImageUrl}
-                              onImageClick={handleGalleryImageClick}
-                              isLifted={liftedImageId === photo.id && selectedImage?.id === photo.id}
-                              isDropping={droppingImageId === photo.id}
-                              hoveredId={hoveredId}
-                              setHoveredId={handleSetHoveredId}
-                            />
-                          );
-                        })}
+                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
+                          <h3 className="text-sm font-semibold text-on-surface">Gallery</h3>
+                          <span className="text-xs text-on-surface-variant">({galleryImages.length})</span>
+                        </div>
+                        <div className={`relative z-0 px-2 pt-2 pb-2 gallery-masonry${isWebKit ? ' is-webkit' : ''}`}>
+                          {galleryImages.map((photo: any, index: number) => {
+                            const optimalSize = getGalleryImageSize();
+                            return (
+                              <GalleryItem
+                                key={photo.id}
+                                photo={photo}
+                                index={index}
+                                isLoaded={true}
+                                optimalSize={optimalSize}
+                                displayName={profile.displayName}
+                                getModifiedImageUrl={getModifiedImageUrl}
+                                onImageClick={handleGalleryImageClick}
+                                isLifted={liftedImageId === photo.id && selectedImage?.id === photo.id}
+                                isDropping={droppingImageId === photo.id}
+                                hoveredId={hoveredId}
+                                setHoveredId={handleSetHoveredId}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
@@ -1047,45 +1078,66 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
                     {/* Hardware Tab */}
                     {activeTab === 'tech' && (
-                      <div className="flex flex-wrap gap-3">
-                        {techSetup.map((item) => (
-                          <TechGridCard
-                            key={item.id}
-                            item={item}
-                            hoveredId={hoveredId}
-                            setHoveredId={handleSetHoveredId}
-                          />
-                        ))}
+                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
+                          <h3 className="text-sm font-semibold text-on-surface">Hardware</h3>
+                          <span className="text-xs text-on-surface-variant">({techSetup.length})</span>
+                        </div>
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                          {techSetup.map((item) => (
+                            <TechGridCard
+                              key={item.id}
+                              item={item}
+                              hoveredId={hoveredId}
+                              setHoveredId={handleSetHoveredId}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     {/* Socials Tab */}
                     {activeTab === 'socials' && (
-                      <div className="flex flex-wrap gap-3">
-                        {publicSocialAccounts.map((account: any) => (
-                          <SocialGridCard
-                            key={account.id}
-                            account={account}
-                            hoveredId={hoveredId}
-                            setHoveredId={handleSetHoveredId}
-                          />
-                        ))}
+                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
+                          <h3 className="text-sm font-semibold text-on-surface">Socials</h3>
+                          <span className="text-xs text-on-surface-variant">({publicSocialAccounts.length})</span>
+                        </div>
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                          {publicSocialAccounts.map((account: any) => (
+                            <SocialGridCard
+                              key={account.id}
+                              account={account}
+                              hoveredId={hoveredId}
+                              setHoveredId={handleSetHoveredId}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     {/* Platforms Tab */}
                     {activeTab === 'platforms' && (
-                      <div className="flex flex-wrap gap-3">
-                        {platforms.map((platform) => (
-                          <PlatformGridCard
-                            key={platform.id}
-                            platform={platform}
-                            hoveredId={hoveredId}
-                            setHoveredId={handleSetHoveredId}
-                          />
-                        ))}
+                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
+                          <h3 className="text-sm font-semibold text-on-surface">Platforms</h3>
+                          <span className="text-xs text-on-surface-variant">({platforms.length})</span>
+                        </div>
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                          {platforms.map((platform) => (
+                            <PlatformGridCard
+                              key={platform.id}
+                              platform={platform}
+                              hoveredId={hoveredId}
+                              setHoveredId={handleSetHoveredId}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
+
+                    {/* Settings Tab */}
+                    {activeTab === 'settings' && <SettingsContent />}
                   </div>
                 </div>
               </div>
