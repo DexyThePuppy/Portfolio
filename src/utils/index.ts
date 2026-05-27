@@ -6,3 +6,4 @@
 export * from './visualUtils';
 export * from './imageUtils';
 export * from './socialNetworks';
+export * from './dateUtils';

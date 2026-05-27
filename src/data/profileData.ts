@@ -223,10 +223,19 @@ export const techSetup: TechItem[] = [
     id: '13', 
     category: 'VR Headset', 
     name: 'Quest 2', 
-    spec: 'Standalone + PCVR',
+    spec: 'PCVR',
     image: '/img/tech/quest.png',
     url: 'https://www.meta.com/quest/products/quest-2/',
     color: 'from-blue-400/20 to-indigo-500/20'
+  },
+  { 
+    id: '17', 
+    category: 'VR Headset', 
+    name: 'Quest Pro', 
+    spec: 'PCVR + Face Tracking',
+    image: '/img/tech/questpro.png',
+    url: 'https://www.meta.com/at/quest/safety-center/quest-pro/',
+    color: 'from-slate-400/20 to-gray-600/20'
   },
   { 
     id: '14', 

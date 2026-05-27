@@ -49,6 +49,7 @@ import type { ProfileImage, Profile as ProfileType } from '../types/index';
 
 // Utils
 import { getModifiedImageUrl, getGalleryImageSize } from '../utils/imageUtils';
+import { calculateAge } from '../utils/dateUtils';
 import { ANIMATION_TIMINGS, Z_INDEX, GALLERY } from '../constants';
 
 interface ProfileProps {
@@ -1008,7 +1009,7 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                 region: profile.location.place.region,
                 country: profile.location.place.country,
               }}
-              age={profile.age}
+              age={calculateAge(profile.dateOfBirth)}
               species="Shep × Bernese × Dragon"
               relationshipStatus="Single and looking"
               personality="Ambivert"

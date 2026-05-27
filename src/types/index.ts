@@ -68,7 +68,6 @@ export interface Profile {
   displayName: string;
   username: string;
   roles: string[];
-  age: number;
   dateOfBirth: string;
   profileImage: ProfileImage;
   location: ProfileLocation;

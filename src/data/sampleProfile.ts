@@ -104,7 +104,6 @@ export const sampleProfile: Profile = {
   displayName: "Dexy",
   username: "dexy",
   roles: ["supporter_vip"],
-  age: 23,
   dateOfBirth: "2002-05-15",
   profileImage: {
     id: "2379391",
