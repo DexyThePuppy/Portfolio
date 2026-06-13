@@ -1057,16 +1057,19 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
 
   return (
-    <div className="min-h-screen bg-background text-on-background">
+    <div className="min-h-[100dvh] bg-background text-on-background">
       <Banner imageUrl="/img/banner.JPEG" isModalOpen={isModalOpen} />
 
-      <div className="relative z-10">
+      <div
+        className="relative z-10 flex flex-col"
+        style={{
+          minHeight: '100dvh',
+          paddingTop: `calc(${BANNER.HEIGHT} - ${BANNER.AVATAR_OVERLAP})`,
+        }}
+      >
         <div
-          className="profile-glass-panel rounded-t-3xl"
-          style={{
-            marginTop: `calc(${BANNER.HEIGHT} - ${BANNER.AVATAR_OVERLAP})`,
-            minHeight: `calc(100vh - ${BANNER.HEIGHT} + ${BANNER.AVATAR_OVERLAP})`,
-          }}
+          className="profile-glass-panel rounded-t-3xl flex-1"
+          style={{ minHeight: `calc(100dvh - ${BANNER.HEIGHT} + ${BANNER.AVATAR_OVERLAP})` }}
         >
           {/* Header overlaps the banner — avatar sits on the banner/content boundary */}
           <div className="container mx-auto px-4 -mt-14">
