@@ -1,54 +1,34 @@
-import React, { createContext, useContext, useCallback, useState } from 'react';
+import React, { createContext, useContext, useCallback } from 'react';
 import { applyMaterialExpressiveTheme } from '../utils/materialExpressiveTheme';
+import type { TabType } from './TabContext';
 
-const STORAGE_KEY = 'md3-tint';
-const DEFAULT_TINT = '#FF8A80';
-
-export const TINT_PRESETS: { name: string; hex: string }[] = [
-  { name: 'Coral', hex: '#FF8A80' },
-  { name: 'Amber', hex: '#FFB74D' },
-  { name: 'Teal', hex: '#4DD0E1' },
-  { name: 'Blue', hex: '#64B5F6' },
-  { name: 'Violet', hex: '#B39DDB' },
-  { name: 'Mint', hex: '#81C784' },
-  { name: 'Orange', hex: '#FF8A65' },
-  { name: 'Indigo', hex: '#7986CB' },
-];
-
-function loadStoredTint(): string {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && /^#[0-9A-Fa-f]{6}$/.test(stored)) return stored;
-  } catch {
-    /* ignore */
-  }
-  return DEFAULT_TINT;
-}
+export const TAB_COLORS: Record<TabType, string> = {
+  about: '#FF8A80',
+  gallery: '#64B5F6',
+  kinks: '#B39DDB',
+  tech: '#4DD0E1',
+  socials: '#7986CB',
+  platforms: '#81C784',
+  settings: '#FFB74D',
+};
 
 function applyTint(sourceColor: string) {
   applyMaterialExpressiveTheme({ sourceColor, isDark: true });
 }
 
 interface ThemeContextType {
-  sourceColor: string;
-  setSourceColor: (color: string) => void;
+  applyTabTheme: (tab: TabType) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [sourceColor, setSourceColorState] = useState(loadStoredTint);
-
-  const setSourceColor = useCallback((color: string) => {
-    const hex = color.startsWith('#') ? color : `#${color}`;
-    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
-    setSourceColorState(hex);
-    localStorage.setItem(STORAGE_KEY, hex);
-    applyTint(hex);
+  const applyTabTheme = useCallback((tab: TabType) => {
+    applyTint(TAB_COLORS[tab]);
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ sourceColor, setSourceColor }}>
+    <ThemeContext.Provider value={{ applyTabTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -62,7 +42,7 @@ export const useTheme = (): ThemeContextType => {
   return context;
 };
 
-/** Call before React mounts to apply stored tint on first paint */
+/** Call before React mounts to apply the default tab tint on first paint */
 export function applyStoredTheme(): void {
-  applyTint(loadStoredTint());
+  applyTint(TAB_COLORS.gallery);
 }

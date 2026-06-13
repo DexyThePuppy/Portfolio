@@ -15,6 +15,7 @@ export const ANIMATION_TIMINGS = {
 export const Z_INDEX = {
   BASE: 1,
   GALLERY_HOVERED: 30,
+  NAV_BAR: 40,
   MODAL_BACKDROP: 50,
   MODAL_CONTENT: 55,
   MODAL_CLOSE: 60,
@@ -40,10 +41,12 @@ export const MODAL_PADDING = 80;
 
 // Banner parallax settings
 export const BANNER = {
-  HEIGHT: '50vh',
+  HEIGHT: '42vh',
   EXTRA_HEIGHT: 100, // Extra px for parallax movement
   PARALLAX_SPEED: -0.2,
   SCROLL_SMOOTHING: 0.075,
   SCROLL_THRESHOLD: 0.1,
   INITIAL_OFFSET: -50,
+  /** Avatar overlaps the banner by this amount (matches ProfileHeader avatar size) */
+  AVATAR_OVERLAP: '3.5rem',
 } as const;

@@ -5,7 +5,7 @@ import { playWhooshSound } from '../utils/audioHaptics';
 // Components
 import Banner from './Banner';
 import ImageModal from './ImageModal';
-import KinksTable from './KinksTable';
+const KinksTable = React.lazy(() => import('./KinksTable'));
 import {
   StatsSection,
   HobbiesSection,
@@ -30,6 +30,7 @@ import {
   FireIcon,
   HeartIcon,
   Cog6ToothIcon,
+  IdentificationIcon,
 } from '@heroicons/react/24/solid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getSocialIcon, getSocialColors, getSocialDisplayName, getSocialCustomIcon } from '../utils/socialNetworks';
@@ -50,7 +51,7 @@ import type { ProfileImage, Profile as ProfileType } from '../types/index';
 // Utils
 import { getModifiedImageUrl, getGalleryImageSize } from '../utils/imageUtils';
 import { calculateAge } from '../utils/dateUtils';
-import { ANIMATION_TIMINGS, Z_INDEX, GALLERY } from '../constants';
+import { ANIMATION_TIMINGS, Z_INDEX, GALLERY, BANNER } from '../constants';
 
 interface ProfileProps {
   profile: ProfileType;
@@ -67,10 +68,32 @@ const seededRandom = (seed: string): number => {
   return Math.abs((Math.sin(hash) * 10000) % 1);
 };
 
+// Gallery column count – mirrors breakpoints in index.css (.gallery-masonry)
+const getGalleryColumnCount = (width: number): number => {
+  if (width >= 1280) return 6;
+  if (width >= 1024) return 5;
+  return 4;
+};
+
+// CSS columns fill top-to-bottom per column; convert to left-to-right reading order for stagger
+const getGalleryStaggerIndex = (
+  index: number,
+  total: number,
+  columnCount: number,
+  isWebKit: boolean,
+): number => {
+  if (isWebKit) return index;
+  const itemsPerColumn = Math.ceil(total / columnCount);
+  const col = Math.floor(index / itemsPerColumn);
+  const row = index % itemsPerColumn;
+  return row * columnCount + col;
+};
+
 // Gallery Item Component with z-index management
 interface GalleryItemProps {
   photo: ProfileImage;
   index: number;
+  staggerIndex: number;
   isLoaded: boolean;
   optimalSize: number;
   displayName: string;
@@ -85,6 +108,7 @@ interface GalleryItemProps {
 const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
   photo,
   index,
+  staggerIndex,
   isLoaded,
   optimalSize,
   displayName,
@@ -132,12 +156,9 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
 
   return (
     <div
-      className="gallery-item-wrapper"
+      className={`gallery-item-wrapper${isLifted ? ' gallery-item-wrapper--lifted' : ''}`}
       style={{
         zIndex: isHovered ? Z_INDEX.GALLERY_HOVERED : Z_INDEX.BASE,
-        opacity: isLifted ? 0 : 1,
-        pointerEvents: isLifted ? 'none' : undefined,
-        transition: 'opacity 150ms ease-out',
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -159,12 +180,13 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
         data-photo-id={photo.id}
       >
         <div 
-          className="rounded-xl overflow-hidden"
+          className="gallery-fly-in rounded-xl overflow-hidden"
           style={{
             boxShadow: isHovered 
               ? '0 0 0 6px var(--md-sys-color-background)' 
               : '0 0 0 1px var(--color-primary-muted)',
             transition: 'box-shadow 300ms ease-out',
+            animationDelay: `${Math.min(staggerIndex, 20) * 35}ms`,
           }}
         >
           <img
@@ -187,12 +209,20 @@ const GalleryItem: React.FC<GalleryItemProps> = React.memo(({
 GalleryItem.displayName = 'GalleryItem';
 
 // ============================================================================
-// PROFILE HEADER COMPONENT - Bento Grid Style
+// PROFILE HEADER COMPONENT - Social-profile style (avatar overlaps banner)
 // ============================================================================
+
+const getBioPreviewLines = (biography: string, maxLines = 2): string[] =>
+  biography
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith('━') && !line.startsWith('𝗠'))
+    .slice(0, maxLines);
 
 interface ProfileHeaderProps {
   displayName: string;
   profileImageUrl: string;
+  biography: string;
   location: {
     region: string;
     country: string;
@@ -207,6 +237,7 @@ interface ProfileHeaderProps {
 const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
   displayName,
   profileImageUrl,
+  biography,
   location,
   age,
   species,
@@ -214,67 +245,67 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = React.memo(({
   personality,
   languages: langs,
 }) => {
-  const chip = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container border border-[var(--color-primary-muted)] text-xs font-semibold text-on-surface hover:bg-surface-container-high transition-all duration-200";
+  const chip = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container border border-[var(--color-primary-muted)] text-xs font-semibold text-on-surface";
+  const bioLines = getBioPreviewLines(biography);
 
   return (
-    <div className="mb-6">
-      <div className="flex flex-col sm:flex-row gap-5">
+    <header className="mb-5">
+      {/* Avatar + action bar — avatar overlaps the banner above */}
+      <div className="flex items-end gap-3">
+        <img
+          src={profileImageUrl}
+          alt={displayName}
+          className="flex-shrink-0 w-[5.5rem] h-[5.5rem] sm:w-24 sm:h-24 rounded-2xl object-cover border-[3px] border-primary shadow-lg"
+        />
 
-        {/* Profile Image */}
-        <div className="relative group flex-shrink-0 mx-auto sm:mx-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary to-tertiary rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-300" />
-          <img
-            src={profileImageUrl}
-            alt={displayName}
-            className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover border-2 border-[var(--color-primary-40)] group-hover:border-[var(--color-primary-70)] transition-all duration-300 group-hover:scale-[1.02]"
-          />
-        </div>
-
-        {/* Info Section */}
-        <div className="flex-1 flex flex-col justify-center gap-3 text-center sm:text-left">
-
-          {/* Name & Location */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-on-background leading-tight">{displayName}</h1>
-            <p className="text-on-background/60 text-sm flex items-center gap-1.5 justify-center sm:justify-start mt-1">
+        <div className="flex flex-1 items-center min-w-0 pb-1">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-on-background leading-tight truncate">{displayName}</h1>
+            <p className="text-on-background/60 text-sm flex items-center gap-1.5 mt-0.5 truncate">
               <MapPinIcon className="w-3.5 h-3.5 flex-shrink-0" />
               {location.region}, {location.country}
             </p>
           </div>
-
-          {/* Row 1 – Personal: age · orientation · relationship · personality */}
-          <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-            <span className={chip}>
-              <CakeIcon className="w-3 h-3 text-secondary" />
-              {age} years
-            </span>
-            <span className={chip}>🏳️‍🌈 Gay</span>
-            <span className={chip}>
-              <HeartIcon className="w-3 h-3 text-primary" />
-              {relationshipStatus}
-            </span>
-            <span className={chip}>
-              <UserGroupIcon className="w-3 h-3 text-tertiary" />
-              {personality}
-            </span>
-          </div>
-
-          {/* Row 2 – Character: species · languages */}
-          <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
-            <span className={chip}>
-              <SparklesIcon className="w-3 h-3 text-primary" />
-              {species}
-            </span>
-            {langs.map((lang) => (
-              <span key={lang.id} className={chip}>
-                {lang.flag} {lang.name}
-              </span>
-            ))}
-          </div>
-
         </div>
       </div>
-    </div>
+
+      {/* Bio */}
+      <div className="mt-3">
+        {bioLines.length > 0 && (
+          <div className="space-y-0.5">
+            {bioLines.map((line) => (
+              <p key={line} className="text-sm text-on-surface-variant leading-snug">{line}</p>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Metadata chips */}
+      <div className="flex flex-wrap gap-1.5 mt-3">
+        <span className={chip}>
+          <HeartIcon className="w-3 h-3 text-primary" />
+          {relationshipStatus}
+        </span>
+        <span className={chip}>
+          <CakeIcon className="w-3 h-3 text-secondary" />
+          {age} years
+        </span>
+        <span className={chip}>🏳️‍🌈 Gay</span>
+        <span className={chip}>
+          <UserGroupIcon className="w-3 h-3 text-tertiary" />
+          {personality}
+        </span>
+        <span className={chip}>
+          <SparklesIcon className="w-3 h-3 text-primary" />
+          {species}
+        </span>
+        {langs.map((lang) => (
+          <span key={lang.id} className={chip}>
+            {lang.flag} {lang.name}
+          </span>
+        ))}
+      </div>
+    </header>
   );
 });
 
@@ -302,7 +333,7 @@ const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, 
         onClick(id);
       }}
       className={`
-        flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
+        flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex-shrink-0
         ${isActive 
           ? 'bg-[var(--color-primary-muted-strong)] text-primary border border-[var(--color-primary-30)]' 
           : 'bg-on-surface-5 text-on-surface-variant border border-on-surface-10 hover:bg-on-surface-10 hover:text-on-background'
@@ -315,28 +346,54 @@ const TabButton: React.FC<TabButtonProps> = ({ id, label, icon: Icon, isActive, 
   );
 };
 
-const SettingsTabButton: React.FC = () => {
-  const { trigger } = useHapticsWithAudio();
+interface TabNavbarProps {
+  nsfwEnabled: boolean;
+}
+
+const TabNavbar: React.FC<TabNavbarProps> = ({ nsfwEnabled }) => {
   const { activeTab, setActiveTab } = useTab();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isScrollable, setIsScrollable] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateScrollable = () => {
+      setIsScrollable(el.scrollWidth > el.clientWidth + 1);
+    };
+
+    updateScrollable();
+
+    const observer = new ResizeObserver(updateScrollable);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [nsfwEnabled]);
 
   return (
-    <button
-      onClick={() => {
-        trigger('light');
-        setActiveTab('settings');
-      }}
-      className={`
-        flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300
-        ${activeTab === 'settings'
-          ? 'bg-[var(--color-primary-muted-strong)] text-primary border border-[var(--color-primary-30)]'
-          : 'bg-on-surface-5 text-on-surface-variant border border-on-surface-10 hover:bg-on-surface-10 hover:text-on-background'
-        }
-      `}
-      title="Settings"
+    <nav
+      className="fixed bottom-4 left-4 right-4 flex justify-center pointer-events-none"
+      style={{ zIndex: Z_INDEX.NAV_BAR }}
+      aria-label="Profile sections"
     >
-      <Cog6ToothIcon className="w-4 h-4" />
-      <span>Settings</span>
-    </button>
+      <div className="profile-glass-panel rounded-2xl w-max max-w-full min-w-0 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)] border border-white/10 pointer-events-auto">
+        <div
+          ref={scrollRef}
+          className={`tab-navbar-scroll flex flex-nowrap gap-2 px-2 py-2${isScrollable ? ' tab-navbar-scroll--fade' : ''}`}
+        >
+          <TabButton id="about" label="About" icon={IdentificationIcon} isActive={activeTab === 'about'} onClick={setActiveTab} />
+          <TabButton id="gallery" label="Gallery" icon={PhotoIcon} isActive={activeTab === 'gallery'} onClick={setActiveTab} />
+          {nsfwEnabled && (
+            <TabButton id="kinks" label="Kinks" icon={FireIcon} isActive={activeTab === 'kinks'} onClick={setActiveTab} />
+          )}
+          <TabButton id="tech" label="Hardware" icon={CpuChipIcon} isActive={activeTab === 'tech'} onClick={setActiveTab} />
+          <TabButton id="socials" label="Socials" icon={GlobeAltIcon} isActive={activeTab === 'socials'} onClick={setActiveTab} />
+          <TabButton id="platforms" label="Platforms" icon={Square3Stack3DIcon} isActive={activeTab === 'platforms'} onClick={setActiveTab} />
+          <TabButton id="settings" label="Settings" icon={Cog6ToothIcon} isActive={activeTab === 'settings'} onClick={setActiveTab} />
+        </div>
+      </div>
+    </nav>
   );
 };
 
@@ -827,6 +884,15 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     setIsWebKit(isWebKitBrowser);
   }, []);
 
+  const [galleryColumnCount, setGalleryColumnCount] = useState(() =>
+    typeof window !== 'undefined' ? getGalleryColumnCount(window.innerWidth) : 4,
+  );
+  useEffect(() => {
+    const onResize = () => setGalleryColumnCount(getGalleryColumnCount(window.innerWidth));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Hover state - tracks which item is currently hovered (works for all tabs)
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   
@@ -994,17 +1060,20 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
     <div className="min-h-screen bg-background text-on-background">
       <Banner imageUrl="/img/banner.JPEG" isModalOpen={isModalOpen} />
 
-      {/* Scrollable Content Area */}
       <div className="relative z-10">
-        {/* Empty space to push content below the banner */}
-        <div className="h-[25vh]" />
-
-        {/* Main Content with dark background */}
-        <div className="bg-background min-h-[35vh] rounded-t-3xl shadow-lg pt-8 border-t border-[var(--color-primary-muted)] backdrop-blur-sm">
-          <div className="container mx-auto px-4">
+        <div
+          className="profile-glass-panel rounded-t-3xl"
+          style={{
+            marginTop: `calc(${BANNER.HEIGHT} - ${BANNER.AVATAR_OVERLAP})`,
+            minHeight: `calc(100vh - ${BANNER.HEIGHT} + ${BANNER.AVATAR_OVERLAP})`,
+          }}
+        >
+          {/* Header overlaps the banner — avatar sits on the banner/content boundary */}
+          <div className="container mx-auto px-4 -mt-14">
             <ProfileHeader
               displayName={profile.displayName}
               profileImageUrl={getModifiedImageUrl(profile.profileImage.image.uuid)}
+              biography={profile.bio.biography}
               location={{
                 region: profile.location.place.region,
                 country: profile.location.place.country,
@@ -1015,35 +1084,26 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
               personality="Ambivert"
               languages={languages}
             />
+          </div>
 
-            {/* Main Content */}
-            <div className="mt-6">
-              <div className="grid lg:grid-cols-12 gap-6">
-                {/* Left Column - Info Sections */}
-                <div className="lg:col-span-3 order-2 lg:order-1">
-                  <StatsSection categories={statsInfo} />
-                  <HobbiesSection items={hobbies} />
-                </div>
-
-                {/* Right Column - Tabbed Content */}
-                <div className="lg:col-span-9 order-1 lg:order-2 overflow-visible">
-                  {/* Tab Navigation */}
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mb-4">
-                    <TabButton id="gallery" label="Gallery" icon={PhotoIcon} isActive={activeTab === 'gallery'} onClick={setActiveTab} />
-                    {nsfwEnabled && (
-                      <TabButton id="kinks" label="Kinks" icon={FireIcon} isActive={activeTab === 'kinks'} onClick={setActiveTab} />
-                    )}
-                    <TabButton id="tech" label="Hardware" icon={CpuChipIcon} isActive={activeTab === 'tech'} onClick={setActiveTab} />
-                    <TabButton id="socials" label="Socials" icon={GlobeAltIcon} isActive={activeTab === 'socials'} onClick={setActiveTab} />
-                    <TabButton id="platforms" label="Platforms" icon={Square3Stack3DIcon} isActive={activeTab === 'platforms'} onClick={setActiveTab} />
-                    <SettingsTabButton />
-                  </div>
-
+          {/* Tabbed content */}
+          <div className="container mx-auto px-4 pb-24">
+          <div className="mt-2">
+            <div className="grid lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-12 overflow-visible">
                   {/* Tab Content */}
                   <div>
+                    {/* About Tab */}
+                    {activeTab === 'about' && (
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
+                        <StatsSection categories={statsInfo} className="contents" />
+                        <HobbiesSection items={hobbies} className="contents" startIndex={statsInfo.length} />
+                      </div>
+                    )}
+
                     {/* Gallery Tab */}
                     {activeTab === 'gallery' && (
-                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                      <div className="fly-in bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
                           <h3 className="text-sm font-semibold text-on-surface">Gallery</h3>
                           <span className="text-xs text-on-surface-variant">({galleryImages.length})</span>
@@ -1056,6 +1116,12 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
                                 key={photo.id}
                                 photo={photo}
                                 index={index}
+                                staggerIndex={getGalleryStaggerIndex(
+                                  index,
+                                  galleryImages.length,
+                                  galleryColumnCount,
+                                  isWebKit,
+                                )}
                                 isLoaded={true}
                                 optimalSize={optimalSize}
                                 displayName={profile.displayName}
@@ -1074,17 +1140,19 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
                     {/* Kinks Tab (NSFW only) */}
                     {activeTab === 'kinks' && nsfwEnabled && (
-                      <KinksTable />
+                      <React.Suspense fallback={null}>
+                        <KinksTable />
+                      </React.Suspense>
                     )}
 
                     {/* Hardware Tab */}
                     {activeTab === 'tech' && (
-                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                      <div className="fly-in bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
                           <h3 className="text-sm font-semibold text-on-surface">Hardware</h3>
                           <span className="text-xs text-on-surface-variant">({techSetup.length})</span>
                         </div>
-                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3 stagger">
                           {techSetup.map((item) => (
                             <TechGridCard
                               key={item.id}
@@ -1099,12 +1167,12 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
                     {/* Socials Tab */}
                     {activeTab === 'socials' && (
-                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                      <div className="fly-in bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
                           <h3 className="text-sm font-semibold text-on-surface">Socials</h3>
                           <span className="text-xs text-on-surface-variant">({publicSocialAccounts.length})</span>
                         </div>
-                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3 stagger">
                           {publicSocialAccounts.map((account: any) => (
                             <SocialGridCard
                               key={account.id}
@@ -1119,12 +1187,12 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
 
                     {/* Platforms Tab */}
                     {activeTab === 'platforms' && (
-                      <div className="bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
+                      <div className="fly-in bg-surface-container-high rounded-xl overflow-visible border border-[var(--color-primary-muted)] shadow-sm isolate">
                         <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
                           <h3 className="text-sm font-semibold text-on-surface">Platforms</h3>
                           <span className="text-xs text-on-surface-variant">({platforms.length})</span>
                         </div>
-                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3">
+                        <div className="relative z-0 px-2 pt-2 pb-2 flex flex-wrap gap-3 stagger">
                           {platforms.map((platform) => (
                             <PlatformGridCard
                               key={platform.id}
@@ -1146,6 +1214,8 @@ const Profile: React.FC<ProfileProps> = ({ profile }) => {
           </div>
         </div>
       </div>
+
+      <TabNavbar nsfwEnabled={nsfwEnabled} />
 
       {/* Image Modal */}
       <ImageModal

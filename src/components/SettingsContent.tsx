@@ -1,8 +1,7 @@
 import React from 'react';
 import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import { useNSFW } from '../contexts/NSFWContext';
-import { useTheme, TINT_PRESETS } from '../contexts/ThemeContext';
-import { ShieldCheckIcon, ServerStackIcon, TrashIcon, SwatchIcon } from '@heroicons/react/24/solid';
+import { ShieldCheckIcon, ServerStackIcon, TrashIcon } from '@heroicons/react/24/solid';
 
 const settingsCard =
   'bg-surface-container-high rounded-xl overflow-hidden border border-[var(--color-primary-muted)] shadow-sm';
@@ -17,7 +16,6 @@ const settingsRow =
  */
 const SettingsContent: React.FC = () => {
   const { nsfwEnabled, setNsfwEnabled, setHasConsented } = useNSFW();
-  const { sourceColor, setSourceColor } = useTheme();
   const { trigger } = useHapticsWithAudio();
 
   const clearCache = () => {
@@ -37,42 +35,14 @@ const SettingsContent: React.FC = () => {
   };
 
   return (
-    <div className="space-y-3">
-      {/* Appearance */}
-      <div className={settingsCard}>
-        <div className={settingsHeader}>
-          <SwatchIcon className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-on-surface">Appearance</h3>
-        </div>
-        <div className="px-2 pb-2 pt-2">
-          <div className={`${settingsRow} flex-wrap gap-2`}>
-            {TINT_PRESETS.map((preset) => (
-              <button
-                key={preset.hex}
-                onClick={() => {
-                  trigger('light');
-                  setSourceColor(preset.hex);
-                }}
-                className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110 flex-shrink-0 ${
-                  sourceColor.toLowerCase() === preset.hex.toLowerCase()
-                    ? 'border-on-surface ring-2 ring-primary/50'
-                    : 'border-transparent hover:border-on-surface-20'
-                }`}
-                style={{ backgroundColor: preset.hex }}
-                title={preset.name}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
+    <div className="space-y-3 stagger">
       {/* Content */}
       <div className={settingsCard}>
         <div className={settingsHeader}>
           {nsfwEnabled ? <span className="text-lg">🔞</span> : <ShieldCheckIcon className="w-4 h-4 text-secondary" />}
           <h3 className="text-sm font-semibold text-on-surface">Content</h3>
         </div>
-        <div className="px-2 pt-1 pb-1.5 space-y-0.5">
+        <div className="px-2 pt-1 pb-1.5 space-y-0.5 stagger">
           <div className={`${settingsRow} justify-between`}>
             <span className="text-sm text-on-surface">NSFW Content</span>
             <button
@@ -100,7 +70,7 @@ const SettingsContent: React.FC = () => {
           <h3 className="text-sm font-semibold text-on-surface">Debug</h3>
           <span className="text-xs text-on-surface-variant">(2)</span>
         </div>
-        <div className="px-2 pt-1 pb-1.5 space-y-0.5">
+        <div className="px-2 pt-1 pb-1.5 space-y-0.5 stagger">
           <button
             onClick={clearCache}
             className={`${settingsRow} w-full text-left`}

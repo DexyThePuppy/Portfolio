@@ -90,10 +90,6 @@ export const kinksData: ProfileKink[] = [
   { pleasureGive: 2, pleasureReceive: 2, kink: { id: "68", displayName: "Underwear", categoryName: "Outfits", isSinglePlayer: false } },
   { pleasureGive: 2, pleasureReceive: 2, kink: { id: "69", displayName: "Uniforms", categoryName: "Outfits", isSinglePlayer: false } },
   
-  // Vaginal Sex & Play
-  { pleasureGive: 2, pleasureReceive: 2, kink: { id: "59", displayName: "Double Penetration", categoryName: "Vaginal Sex & Play", isSinglePlayer: false } },
-  { pleasureGive: 2, pleasureReceive: 2, kink: { id: "39", displayName: "Fingering", categoryName: "Vaginal Sex & Play", isSinglePlayer: false } },
-  
   // Roughness
   { pleasureGive: 2, pleasureReceive: 2, kink: { id: "82", displayName: "Biting", categoryName: "Roughness", isSinglePlayer: false } },
   { pleasureGive: 0, pleasureReceive: -1, kink: { id: "87", displayName: "Breath Control", categoryName: "Roughness", isSinglePlayer: false } },

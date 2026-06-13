@@ -1,0 +1,122 @@
+/**
+ * Smooth tab-tint transitions – animates MD3 tokens when applyTabTheme runs.
+ * Requires @property so custom properties interpolate between hex/rgba values.
+ */
+
+@property --md-sys-color-primary { syntax: '<color>'; inherits: true; initial-value: #6750a4; }
+@property --md-sys-color-on-primary { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --md-sys-color-primary-container { syntax: '<color>'; inherits: true; initial-value: #eaddff; }
+@property --md-sys-color-on-primary-container { syntax: '<color>'; inherits: true; initial-value: #21005d; }
+@property --md-sys-color-secondary { syntax: '<color>'; inherits: true; initial-value: #625b71; }
+@property --md-sys-color-on-secondary { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --md-sys-color-secondary-container { syntax: '<color>'; inherits: true; initial-value: #e8def8; }
+@property --md-sys-color-on-secondary-container { syntax: '<color>'; inherits: true; initial-value: #1d192b; }
+@property --md-sys-color-tertiary { syntax: '<color>'; inherits: true; initial-value: #7d5260; }
+@property --md-sys-color-on-tertiary { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --md-sys-color-tertiary-container { syntax: '<color>'; inherits: true; initial-value: #ffd8e4; }
+@property --md-sys-color-on-tertiary-container { syntax: '<color>'; inherits: true; initial-value: #31111d; }
+@property --md-sys-color-error { syntax: '<color>'; inherits: true; initial-value: #f44336; }
+@property --md-sys-color-on-error { syntax: '<color>'; inherits: true; initial-value: #ffffff; }
+@property --md-sys-color-error-container { syntax: '<color>'; inherits: true; initial-value: #93000a; }
+@property --md-sys-color-on-error-container { syntax: '<color>'; inherits: true; initial-value: #ffdad6; }
+@property --md-sys-color-background { syntax: '<color>'; inherits: true; initial-value: #1c1b1f; }
+@property --md-sys-color-on-background { syntax: '<color>'; inherits: true; initial-value: #e6e1e5; }
+@property --md-sys-color-surface { syntax: '<color>'; inherits: true; initial-value: #1c1b1f; }
+@property --md-sys-color-on-surface { syntax: '<color>'; inherits: true; initial-value: #e6e1e5; }
+@property --md-sys-color-surface-dim { syntax: '<color>'; inherits: true; initial-value: #141316; }
+@property --md-sys-color-surface-bright { syntax: '<color>'; inherits: true; initial-value: #3a383e; }
+@property --md-sys-color-surface-container-lowest { syntax: '<color>'; inherits: true; initial-value: #0f0d13; }
+@property --md-sys-color-surface-container-low { syntax: '<color>'; inherits: true; initial-value: #1d1b20; }
+@property --md-sys-color-surface-container { syntax: '<color>'; inherits: true; initial-value: #211f26; }
+@property --md-sys-color-surface-container-high { syntax: '<color>'; inherits: true; initial-value: #2b2930; }
+@property --md-sys-color-surface-container-highest { syntax: '<color>'; inherits: true; initial-value: #36343b; }
+@property --md-sys-color-surface-variant { syntax: '<color>'; inherits: true; initial-value: #49454f; }
+@property --md-sys-color-on-surface-variant { syntax: '<color>'; inherits: true; initial-value: #cac4d0; }
+@property --md-sys-color-outline { syntax: '<color>'; inherits: true; initial-value: #938f99; }
+@property --md-sys-color-outline-variant { syntax: '<color>'; inherits: true; initial-value: #49454f; }
+@property --md-sys-color-shadow { syntax: '<color>'; inherits: true; initial-value: #000000; }
+@property --md-sys-color-scrim { syntax: '<color>'; inherits: true; initial-value: #000000; }
+@property --md-sys-color-inverse-surface { syntax: '<color>'; inherits: true; initial-value: #e6e1e5; }
+@property --md-sys-color-inverse-on-surface { syntax: '<color>'; inherits: true; initial-value: #313033; }
+@property --md-sys-color-inverse-primary { syntax: '<color>'; inherits: true; initial-value: #6750a4; }
+@property --color-accent { syntax: '<color>'; inherits: true; initial-value: #6750a4; }
+@property --color-accent-dark { syntax: '<color>'; inherits: true; initial-value: #eaddff; }
+@property --color-primary-muted { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.1); }
+@property --color-primary-muted-subtle { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.05); }
+@property --color-primary-muted-strong { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.2); }
+@property --color-primary-30 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.3); }
+@property --color-primary-40 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.4); }
+@property --color-primary-50 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.5); }
+@property --color-primary-70 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 138, 128, 0.7); }
+@property --color-on-surface-5 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 255, 255, 0.05); }
+@property --color-on-surface-10 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 255, 255, 0.1); }
+@property --color-on-surface-20 { syntax: '<color>'; inherits: true; initial-value: rgba(255, 255, 255, 0.2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --theme-transition-duration: 0.65s;
+    --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html {
+    transition:
+      --md-sys-color-primary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-primary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-primary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-primary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-secondary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-secondary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-secondary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-secondary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-tertiary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-tertiary var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-tertiary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-tertiary-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-error var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-error var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-error-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-error-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-background var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-background var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-surface var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-dim var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-bright var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-container-lowest var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-container-low var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-container var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-container-high var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-container-highest var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-surface-variant var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-on-surface-variant var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-outline var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-outline-variant var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-shadow var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-scrim var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-inverse-surface var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-inverse-on-surface var(--theme-transition-duration) var(--theme-transition-easing),
+      --md-sys-color-inverse-primary var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-accent var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-accent-dark var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-muted var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-muted-subtle var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-muted-strong var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-30 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-40 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-50 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-primary-70 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-on-surface-5 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-on-surface-10 var(--theme-transition-duration) var(--theme-transition-easing),
+      --color-on-surface-20 var(--theme-transition-duration) var(--theme-transition-easing);
+  }
+
+  /* Fallback for browsers without animatable custom properties */
+  @supports not (transition: --md-sys-color-primary 0.1s) {
+    body,
+    body :where(:not(.fly-in):not(.gallery-fly-in):not(.gallery-item-wrapper):not(.gallery-item):not(.gallery-item *)) {
+      transition-property: background-color, color, border-color, box-shadow, outline-color, fill, stroke;
+      transition-duration: var(--theme-transition-duration);
+      transition-timing-function: var(--theme-transition-easing);
+    }
+  }
+}

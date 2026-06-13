@@ -37,6 +37,7 @@ interface KinkRowProps {
   pleasureReceive: number;
   isSinglePlayer: boolean;
   index: number;
+  animationDelayMs: number;
 }
 
 /**
@@ -48,17 +49,17 @@ const KinkRow: React.FC<KinkRowProps> = ({
   pleasureReceive,
   isSinglePlayer,
   index,
+  animationDelayMs,
 }) => {
   const isDarker = index % 2 === 1;
   return (
     <div
-      className={`flex items-center justify-between py-1 px-3 rounded-lg transition-all duration-200 group ${
+      className={`fly-in flex items-center justify-between py-1 px-3 rounded-lg transition-all duration-200 group ${
         isDarker ? 'bg-on-surface-5' : 'bg-transparent'
       } hover:bg-on-surface-10`}
+      style={{ animationDelay: `${animationDelayMs}ms` }}
     >
-      <span className="text-sm text-on-surface flex-1 min-w-0 truncate pr-2">
-        {displayName}
-      </span>
+      <span className="text-sm text-on-surface min-w-0 truncate flex-1 pr-2">{displayName}</span>
       <div className="flex items-center gap-2 flex-shrink-0">
         {isSinglePlayer || pleasureGive === pleasureReceive ? (
           <PleasureBadge value={pleasureGive} compact spanFull />
@@ -75,17 +76,23 @@ const KinkRow: React.FC<KinkRowProps> = ({
 
 interface CategorySectionProps {
   category: string;
+  staggerIndex: number;
 }
 
 /**
  * MD3 container card – surface-container-high, MD3 container header (no expander).
  */
-const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
+const CategorySection: React.FC<CategorySectionProps> = ({ category, staggerIndex }) => {
   const kinks = getKinksByCategory(category);
   const hasGiveRecv = kinks.some((k) => !k.kink.isSinglePlayer);
+  const cardDelayMs = Math.min(staggerIndex, 20) * 40;
+  const rowBaseDelayMs = cardDelayMs + 60;
 
   return (
-    <div className="bg-surface-container-high rounded-xl overflow-hidden border border-[var(--color-primary-muted)] shadow-sm">
+    <div
+      className="fly-in bg-surface-container-high rounded-xl overflow-hidden border border-[var(--color-primary-muted)] shadow-sm"
+      style={{ animationDelay: `${cardDelayMs}ms` }}
+    >
       <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant">
         <h3 className="text-sm font-semibold text-on-surface">{category}</h3>
         <span className="text-xs text-on-surface-variant">({kinks.length})</span>
@@ -94,8 +101,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
       <div className="px-2 pt-2 pb-2 space-y-0.5">
         {hasGiveRecv && (
           <div
-            className="flex items-center justify-between py-0 px-3 text-[8px] text-on-surface-variant uppercase tracking-wider font-medium"
+            className="fly-in flex items-center justify-between py-0 px-3 text-[8px] text-on-surface-variant uppercase tracking-wider font-medium"
             aria-label="Give and Receive columns"
+            style={{ animationDelay: `${rowBaseDelayMs}ms` }}
           >
             <span className="flex-1" aria-hidden />
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -112,6 +120,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ category }) => {
             pleasureReceive={kink.pleasureReceive}
             isSinglePlayer={kink.kink.isSinglePlayer}
             index={index}
+            animationDelayMs={rowBaseDelayMs + (hasGiveRecv ? 1 : 0) * 25 + index * 25}
           />
         ))}
       </div>
@@ -153,7 +162,11 @@ const WaterfallMasonry: React.FC<{ categories: string[] }> = ({ categories }) =>
       {distributedCategories.map((columnCategories, columnIndex) => (
         <div key={`column-${columnIndex}`} className="flex-1 min-w-0 space-y-3">
           {columnCategories.map((category) => (
-            <CategorySection key={category} category={category} />
+            <CategorySection
+              key={category}
+              category={category}
+              staggerIndex={categories.indexOf(category)}
+            />
           ))}
         </div>
       ))}

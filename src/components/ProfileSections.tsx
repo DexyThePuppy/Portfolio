@@ -12,24 +12,27 @@ import { CardSection, renderTechCard, renderPlatformCard } from './Cards';
 
 interface StatsSectionProps {
   categories: StatCategory[];
+  className?: string;
 }
 
-const StatCategoryCard: React.FC<{ section: StatCategory }> = ({ section }) => {
+const StatCategoryCard: React.FC<{ section: StatCategory; index?: number }> = ({ section, index = 0 }) => {
   return (
     <div
       className="
+        fly-in
         bg-surface-container-high rounded-xl overflow-hidden
         border border-[var(--color-primary-muted)]
         shadow-sm
       "
+      style={{ ['--fly-i']: index } as React.CSSProperties}
     >
       <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
         <h3 className="text-sm font-semibold text-on-surface">{section.category}</h3>
       </div>
 
-      <div className="px-2 pb-1.5 pt-1 space-y-0.5">
-        {section.items.map((item, index) => {
-          const isDarker = index % 2 === 1;
+      <div className="px-2 pb-1.5 pt-1 space-y-0.5 stagger">
+        {section.items.map((item, itemIndex) => {
+          const isDarker = itemIndex % 2 === 1;
           return (
             <div
               key={item.id}
@@ -52,11 +55,11 @@ const StatCategoryCard: React.FC<{ section: StatCategory }> = ({ section }) => {
   );
 };
 
-export const StatsSection: React.FC<StatsSectionProps> = React.memo(({ categories }) => {
+export const StatsSection: React.FC<StatsSectionProps> = React.memo(({ categories, className = 'space-y-3' }) => {
   return (
-    <div className="space-y-3">
-      {categories.map((section) => (
-        <StatCategoryCard key={section.category} section={section} />
+    <div className={className}>
+      {categories.map((section, index) => (
+        <StatCategoryCard key={section.category} section={section} index={index} />
       ))}
     </div>
   );
@@ -70,24 +73,28 @@ StatsSection.displayName = 'StatsSection';
 
 interface HobbiesSectionProps {
   items: InfoItem[];
+  className?: string;
+  startIndex?: number;
 }
 
-const HobbiesCard: React.FC<{ items: InfoItem[] }> = ({ items }) => {
+const HobbiesCard: React.FC<{ items: InfoItem[]; startIndex?: number }> = ({ items, startIndex = 0 }) => {
   return (
     <div
       className="
+        fly-in
         bg-surface-container-high rounded-xl overflow-hidden
         border border-[var(--color-primary-muted)]
         shadow-sm
       "
+      style={{ ['--fly-i']: startIndex } as React.CSSProperties}
     >
       <div className="flex items-center gap-2 px-4 py-2 bg-surface-container border-b border-outline-variant rounded-t-xl">
         <h3 className="text-sm font-semibold text-on-surface">Hobbies & Skills</h3>
       </div>
 
-      <div className="px-2 pb-1.5 pt-1 space-y-0.5">
-        {items.map((hobby, index) => {
-          const isDarker = index % 2 === 1;
+      <div className="px-2 pb-1.5 pt-1 space-y-0.5 stagger">
+        {items.map((hobby, itemIndex) => {
+          const isDarker = itemIndex % 2 === 1;
           return (
             <div
               key={hobby.id}
@@ -110,10 +117,10 @@ const HobbiesCard: React.FC<{ items: InfoItem[] }> = ({ items }) => {
   );
 };
 
-export const HobbiesSection: React.FC<HobbiesSectionProps> = React.memo(({ items }) => {
+export const HobbiesSection: React.FC<HobbiesSectionProps> = React.memo(({ items, className, startIndex = 0 }) => {
   return (
-    <div className="mt-4">
-      <HobbiesCard items={items} />
+    <div className={className}>
+      <HobbiesCard items={items} startIndex={startIndex} />
     </div>
   );
 });
