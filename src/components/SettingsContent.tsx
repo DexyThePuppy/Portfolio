@@ -44,8 +44,11 @@ const SettingsContent: React.FC = () => {
         </div>
         <div className="px-2 pt-1 pb-1.5 space-y-0.5 stagger">
           <div className={`${settingsRow} justify-between`}>
-            <span className="text-sm text-on-surface">NSFW Content</span>
+            <span id="nsfw-toggle-label" className="text-sm text-on-surface">NSFW Content</span>
             <button
+              role="switch"
+              aria-checked={nsfwEnabled}
+              aria-labelledby="nsfw-toggle-label"
               onClick={() => {
                 trigger('medium');
                 setNsfwEnabled(!nsfwEnabled);

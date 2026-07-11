@@ -38,9 +38,9 @@ const Banner: React.FC<BannerProps> = React.memo(({ imageUrl, isModalOpen = fals
     };
     
     const animate = () => {
-      if (isModalOpenRef.current) return;
-      
-      if (Math.abs(lastScrollY - currentY) > BANNER.SCROLL_THRESHOLD) {
+      // Pause (but keep scheduling) while the modal is open, otherwise the
+      // loop would die permanently after the first modal open
+      if (!isModalOpenRef.current && Math.abs(lastScrollY - currentY) > BANNER.SCROLL_THRESHOLD) {
         currentY = currentY + (lastScrollY - currentY) * BANNER.SCROLL_SMOOTHING;
         setScrollY(currentY);
       }
@@ -56,11 +56,26 @@ const Banner: React.FC<BannerProps> = React.memo(({ imageUrl, isModalOpen = fals
     };
   }, []);
 
+  // Static fade on the fixed container (softens the overall banner region)
+  const containerMask = 'linear-gradient(to bottom, black 0%, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)';
+  // Moving fade on the image itself: travels with the parallax so the image's
+  // own bottom edge is never visible as a hard line
+  const imageMask = 'linear-gradient(to bottom, black 0%, black 60%, rgba(0,0,0,0.5) 82%, transparent 98%)';
+
   return (
     <>
-      {/* Banner Image - Fixed at top with parallax effect */}
-      <div className="fixed top-0 left-0 right-0 z-0 overflow-hidden" style={{ height: BANNER.HEIGHT }}>
+      {/* Banner Image - Fixed at top with parallax effect, masked to fade out */}
+      <div
+        className="fixed top-0 left-0 right-0 z-0 overflow-hidden"
+        style={{
+          height: `calc(${BANNER.HEIGHT} + 8vh)`,
+          WebkitMaskImage: containerMask,
+          maskImage: containerMask,
+        }}
+      >
         <div
+          role="img"
+          aria-label="Profile banner"
           style={{
             backgroundImage: `url('${imageUrl}')`,
             backgroundSize: 'cover',
@@ -68,16 +83,17 @@ const Banner: React.FC<BannerProps> = React.memo(({ imageUrl, isModalOpen = fals
             height: `calc(100% + ${BANNER.EXTRA_HEIGHT}px)`,
             width: '100%',
             transform: `translate3d(0, ${BANNER.INITIAL_OFFSET + scrollY * BANNER.PARALLAX_SPEED}px, 0)`,
-            transition: 'transform 0.05s cubic-bezier(0.33, 1, 0.68, 1)'
+            transition: 'transform 0.05s cubic-bezier(0.33, 1, 0.68, 1)',
+            WebkitMaskImage: imageMask,
+            maskImage: imageMask,
           }}
         />
+        {/* Subtle darkening toward the bottom for contrast with the panel */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background opacity-60"
+        />
       </div>
-      
-      {/* Gradient Overlay - Fixed with banner */}
-      <div 
-        className="fixed top-0 left-0 right-0 bg-gradient-to-b from-transparent to-background z-0 opacity-80" 
-        style={{ height: BANNER.HEIGHT }}
-      />
     </>
   );
 });

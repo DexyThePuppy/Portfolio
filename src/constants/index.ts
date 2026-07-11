@@ -42,11 +42,11 @@ export const MODAL_PADDING = 80;
 // Banner parallax settings
 export const BANNER = {
   HEIGHT: '42vh',
-  EXTRA_HEIGHT: 100, // Extra px for parallax movement
-  PARALLAX_SPEED: -0.2,
+  EXTRA_HEIGHT: 240, // Extra px for parallax movement
+  PARALLAX_SPEED: -0.3,
   SCROLL_SMOOTHING: 0.075,
   SCROLL_THRESHOLD: 0.1,
-  INITIAL_OFFSET: -50,
-  /** Avatar overlaps the banner by this amount (matches ProfileHeader avatar size) */
-  AVATAR_OVERLAP: '3.5rem',
+  INITIAL_OFFSET: -120,
+  /** The header (avatar, name, badges, bio) overlays the bottom of the banner by this amount */
+  HEADER_OVERLAP: '9.5rem',
 } as const;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/solid';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import type { ProfileImage } from '../types/index';
 import { Z_INDEX, IMAGE_SIZES, MODAL_PADDING, ANIMATION_TIMINGS, GALLERY } from '../constants';
@@ -19,6 +19,10 @@ interface ImageModalProps {
   openNonce: number;
   onClose: () => void;
   getImageUrl: (uuid: string, size?: number) => string;
+  /** Navigate to the previous (-1) or next (1) image; omit to hide navigation */
+  onNavigate?: (direction: 1 | -1) => void;
+  imageIndex?: number;
+  imageCount?: number;
 }
 
 const ImageModal: React.FC<ImageModalProps> = ({
@@ -29,6 +33,9 @@ const ImageModal: React.FC<ImageModalProps> = ({
   openNonce,
   onClose,
   getImageUrl,
+  onNavigate,
+  imageIndex,
+  imageCount,
 }) => {
   // Haptic feedback with audio
   const { trigger, triggerDrop } = useHapticsWithAudio();
@@ -57,6 +64,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
     (typeof window !== 'undefined' && window.innerWidth <= 768);
   
   // Refs
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -424,17 +435,68 @@ const ImageModal: React.FC<ImageModalProps> = ({
     };
   }, []);
   
-  // Handle escape key
+  // Navigate to previous/next image with light haptic feedback
+  const handleNavigate = useCallback((direction: 1 | -1) => {
+    if (!onNavigate || isClosingRef.current) return;
+    trigger('light');
+    onNavigate(direction);
+  }, [onNavigate, trigger]);
+
+  // Escape closes, arrows navigate, Tab cycles inside the dialog (focus trap)
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedImage) {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedImage) return;
+      if (e.key === 'Escape') {
         handleClose();
+      } else if (e.key === 'ArrowLeft') {
+        handleNavigate(-1);
+      } else if (e.key === 'ArrowRight') {
+        handleNavigate(1);
+      } else if (e.key === 'Tab') {
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>('button');
+        if (!focusables || focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && (active === last || !dialogRef.current?.contains(active))) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [selectedImage, handleClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, handleClose, handleNavigate]);
+
+  // Swipe left/right to navigate on touch devices
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(deltaX) < 60) return;
+    // Swiping left reveals the next image, swiping right the previous one
+    handleNavigate(deltaX < 0 ? 1 : -1);
+  }, [handleNavigate]);
+
+  // Move focus into the modal on open, restore it to the trigger on close
+  useEffect(() => {
+    if (selectedImage) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      closeButtonRef.current?.focus();
+      return () => {
+        previousFocusRef.current?.focus();
+        previousFocusRef.current = null;
+      };
+    }
+  }, [selectedImage]);
   
   if (!selectedImage || !startPosition) {
     return null;
@@ -446,10 +508,16 @@ const ImageModal: React.FC<ImageModalProps> = ({
   
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image viewer"
       className={`fixed inset-0 transition-colors duration-300 ${
         isOpen && !isClosing ? 'bg-black/90' : 'bg-transparent'
       }`}
       onClick={handleClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
         pointerEvents: isClosingRef.current ? 'none' : 'auto',
         zIndex: Z_INDEX.MODAL_BACKDROP,
@@ -457,11 +525,12 @@ const ImageModal: React.FC<ImageModalProps> = ({
     >
       {/* Close button */}
       <button
+        ref={closeButtonRef}
         className={`absolute top-4 right-4 text-on-surface hover:text-on-surface-variant transition-opacity duration-300 ${
           isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={handleClose}
-        aria-label="Close"
+        aria-label="Close image viewer"
         style={{
           pointerEvents: isClosingRef.current ? 'none' : 'auto',
           zIndex: Z_INDEX.MODAL_CLOSE,
@@ -470,10 +539,63 @@ const ImageModal: React.FC<ImageModalProps> = ({
         <XMarkIcon className="w-8 h-8" />
       </button>
       
+      {/* Prev / next navigation */}
+      {onNavigate && (
+        <>
+          <button
+            className={`absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-on-surface hover:bg-black/60 transition-all duration-300 ${
+              isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNavigate(-1);
+            }}
+            aria-label="Previous image"
+            style={{
+              pointerEvents: isClosingRef.current ? 'none' : 'auto',
+              zIndex: Z_INDEX.MODAL_CLOSE,
+            }}
+          >
+            <ChevronLeftIcon className="w-7 h-7" />
+          </button>
+          <button
+            className={`absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-on-surface hover:bg-black/60 transition-all duration-300 ${
+              isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNavigate(1);
+            }}
+            aria-label="Next image"
+            style={{
+              pointerEvents: isClosingRef.current ? 'none' : 'auto',
+              zIndex: Z_INDEX.MODAL_CLOSE,
+            }}
+          >
+            <ChevronRightIcon className="w-7 h-7" />
+          </button>
+        </>
+      )}
+
+      {/* Position counter */}
+      {typeof imageIndex === 'number' && typeof imageCount === 'number' && imageCount > 1 && (
+        <div
+          className={`absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/50 backdrop-blur-sm text-on-surface text-xs font-medium pointer-events-none transition-opacity duration-300 ${
+            isOpen && !isClosing ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{ zIndex: Z_INDEX.MODAL_CLOSE }}
+          aria-live="polite"
+        >
+          {imageIndex + 1} / {imageCount}
+        </div>
+      )}
+
       {/* Loading indicator */}
       {showLoading && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{ zIndex: Z_INDEX.MODAL_LOADING }}
+          role="status"
+          aria-live="polite"
         >
           <div className="flex flex-col items-center gap-4 bg-black/50 backdrop-blur-sm rounded-2xl px-6 py-4">
             <svg className="animate-spin h-10 w-10 text-on-surface" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

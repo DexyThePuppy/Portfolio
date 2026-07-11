@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useHapticsWithAudio } from '../hooks/useHapticsWithAudio';
 import { useNSFW } from '../contexts/NSFWContext';
 import { ExclamationTriangleIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
@@ -8,6 +8,8 @@ const NSFWConsentPopup: React.FC = () => {
   const { trigger } = useHapticsWithAudio();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (showConsentPopup) {
@@ -16,6 +18,29 @@ const NSFWConsentPopup: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [showConsentPopup]);
+
+  // Move focus into the dialog once it becomes visible
+  useEffect(() => {
+    if (isVisible && !isAnimatingOut) {
+      firstButtonRef.current?.focus();
+    }
+  }, [isVisible, isAnimatingOut]);
+
+  // Keep Tab focus cycling inside the dialog
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const focusables = dialogRef.current?.querySelectorAll<HTMLElement>('button');
+    if (!focusables || focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   const handleChoice = (enabled: boolean) => {
     // Haptic feedback on choice
@@ -39,6 +64,11 @@ const NSFWConsentPopup: React.FC = () => {
       `}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nsfw-consent-title"
+        onKeyDown={handleKeyDown}
         className={`
           relative max-w-md w-full bg-surface-container-highest rounded-2xl border border-[var(--color-primary-muted-strong)]
           shadow-2xl shadow-black/50 overflow-hidden
@@ -59,7 +89,7 @@ const NSFWConsentPopup: React.FC = () => {
               <ExclamationTriangleIcon className="w-7 h-7 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-on-surface">Age Verification</h2>
+              <h2 id="nsfw-consent-title" className="text-xl font-bold text-on-surface">Age Verification</h2>
               <p className="text-sm text-on-surface-variant">Content preferences</p>
             </div>
           </div>
@@ -79,6 +109,7 @@ const NSFWConsentPopup: React.FC = () => {
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
+              ref={firstButtonRef}
               onClick={() => handleChoice(false)}
               className="
                 flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl

@@ -16,7 +16,7 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: 3000,
+    port: 3030,
     host: true, // Expose to local network
     open: true,
   },

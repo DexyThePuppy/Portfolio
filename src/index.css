@@ -29,6 +29,75 @@
   --badge-no-text: var(--md-sys-color-on-error-container, #ffdad6);
 }
 
+/* Visible focus ring for keyboard navigation (buttons, links, gallery items) */
+:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Press feedback on touch devices, where hover effects don't apply */
+@media (hover: none) {
+  .card-pressable:active {
+    transform: scale(0.96);
+  }
+  .card-pressable {
+    transition: transform 150ms ease-out;
+  }
+}
+
+/* Contain the blurred background + mix-blend grain inside each card so the
+   whole card caches as one compositor texture during entrance animations */
+.card-pressable {
+  isolation: isolate;
+}
+
+/* Grain tiles at a fixed 256px so the SVG noise rasterizes once and repeats,
+   instead of re-rasterizing at every card's unique size */
+.grain-texture {
+  background-size: 256px 256px;
+  background-repeat: repeat;
+}
+
+/* Main content panel: side gutters grow with viewport width so the banner
+   shows through more on wide (16:9-ish) windows */
+.profile-panel {
+  width: calc(100% - 1.5rem);
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .profile-panel {
+    width: 92%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-panel {
+    width: 85%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .profile-panel {
+    width: 78%;
+  }
+}
+
+/* Wide landscape windows get substantially bigger gutters */
+@media (min-width: 1024px) and (min-aspect-ratio: 3/2) {
+  .profile-panel {
+    width: 68%;
+  }
+}
+
+@media (min-width: 1280px) and (min-aspect-ratio: 16/9) {
+  .profile-panel {
+    width: 60%;
+  }
+}
+
 /* Custom styles */
 body {
   background-color: var(--md-sys-color-background, #1a1a1a);
@@ -261,11 +330,13 @@ h4, h5, h6 {
   transform: scale(1.05);
 }
 
-/* Apple-style frosted glass – main profile content panel */
+/* Apple-style frosted glass – main profile content panel.
+   Blur radius kept moderate: backdrop re-blurs every frame while the parallax
+   banner moves behind it, and cost scales with radius. */
 .profile-glass-panel {
-  background: color-mix(in srgb, var(--md-sys-color-surface-container-high, #2b2930) 58%, transparent);
-  backdrop-filter: blur(48px) saturate(180%);
-  -webkit-backdrop-filter: blur(48px) saturate(180%);
+  background: color-mix(in srgb, var(--md-sys-color-surface-container-high, #2b2930) 64%, transparent);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   border-top: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -353,6 +424,8 @@ h4, h5, h6 {
 .fly-in {
   animation: flyIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(min(var(--fly-i, 0), 16) * 40ms + var(--fly-d, 0ms));
+  /* Keep the animation compositor-only (transform + opacity never repaint) */
+  will-change: transform, opacity;
 }
 
 /* Container fade-in – opacity only so it never fights a child's transform. */
@@ -364,6 +437,8 @@ h4, h5, h6 {
 /* Auto-stagger direct children (no per-item JS needed). */
 .stagger > * {
   animation: flyIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  /* Promote to a compositor layer for the entrance animation */
+  will-change: transform, opacity;
 }
 .stagger > *:nth-child(1) { animation-delay: 0ms; }
 .stagger > *:nth-child(2) { animation-delay: 40ms; }
@@ -405,6 +480,7 @@ h4, h5, h6 {
 
 .gallery-fly-in {
   animation: galleryFlyIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  will-change: transform, opacity;
 }
 
 .gallery-item-wrapper--lifted {
@@ -414,9 +490,10 @@ h4, h5, h6 {
 }
 
 /* Gallery Masonry/Waterfall Layout */
+/* Column counts mirror getGalleryColumnCount() in src/utils/galleryUtils.ts */
 .gallery-masonry {
   --gallery-gap: 0.5rem;
-  column-count: 4;
+  column-count: 2;
   column-gap: var(--gallery-gap);
   width: 100%;
   position: relative;
@@ -445,7 +522,7 @@ h4, h5, h6 {
 
 @media (min-width: 640px) {
   .gallery-masonry {
-    column-count: 4;
+    column-count: 3;
   }
 }
 
@@ -471,7 +548,7 @@ h4, h5, h6 {
 .gallery-masonry.is-webkit {
   column-count: unset;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--gallery-gap);
   overflow: visible;
 }
@@ -509,7 +586,7 @@ h4, h5, h6 {
 
 @media (min-width: 640px) {
   .gallery-masonry.is-webkit {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
